@@ -76,11 +76,15 @@ class Collection:
       return newString
    
    # Categories
+   def hasCategory(self, key, name):
+      if key:
+         return key in self.categories
+      elif name:
+         return name in self.categoryNameToKey
+      return False
    def addCategory(self, name):
-      if self.hasCategory(False, name):
-      
-         return False
-      
+      if self.hasCategory(False, name):      
+         return False      
       key = len(self.categories) + 1 # Keys run from 1 to num of categories
       print "\tKey = %d, Name  = %s" % (key, name)
       category = Category.Category(key, name)
@@ -102,14 +106,14 @@ class Collection:
    def getCategoryKey(self, name):
       # Expects name in lower case
       return self.categoryNameToKey.get(name, False)
-   def hasCategory(self, key, name):
-      if key:
-         return key in self.categories
-      elif name:
-         return name in self.categoryNameToKey
-      return False
    
    # Companies
+   def hasCompany(self, key, name):
+      if key:
+         return self.companies.get(key, False) == True
+      elif name:
+         return self.companyNameToKey.get(name, False) == True
+      return False
    def addCompany(self, name):
       if self.hasCompany(False, name):
          return False
@@ -133,18 +137,10 @@ class Collection:
    def getCompanyKey(self, name):
       # Expects name in lower case
       return self.companyNameToKey.get(name, False)
-   def hasCompany(self, key, name):
-      if key:
-         return self.companies.get(key, False) == True
-      elif name:
-         return self.companyNameToKey.get(name, False) == True
-      return False
-   
-   
-   
-   
    def getCategories(self):
       return self.categories
+   
+   
    def printCollection(self):
       for document in self.documents:
          print "%d -> %s" % (document.getKey(), document.getTitle())

@@ -35,6 +35,9 @@ class Category:      # Class that abstracts a category of documents
       return document.getKey() in self.documents
    def addDocument(self, document):
       # Expects a valid document object as input
+      # Only adds to the collection of documents in category & computes mean
+      # and variance.
+      # Does not compute any weights or tfidf
       if self.hasDocument(document):
          return False
       self.documents[document.getKey()] = document
@@ -47,34 +50,41 @@ class Category:      # Class that abstracts a category of documents
       self.runningMean = newMean
       self.runningVariance = newVari
       return True
-   def getDocuments(self):
-      # Returns list of document keys
-      return self.documents.keys()
    def getDocument(self, key):
       if key in self.documents:
          return self.documents[key]
       return False
-      
+   def getDocuments(self):
+      # Returns list of document keys
+      return self.documents.keys()
+   def predictSalary(self, document):
+      # Stub for method that uses weights/uniqueWeights of terms to predict 
+      # the salary
+      return 0.0
+
    # Companies
+   def hasCompany(self, company):
+      return company.getKey() in self.companies
    def addCompany(self, company):
       # Expects a valid company object as input
       if self.hasCompany(company):
          return False
       self.companies[company.getKey()] = company
       return True
-   def hasCompany(self, company):
-      return company.getKey() in self.companies
    def getCompanies(self):
       # Returns list of company keys
       return self.companies.keys()
    
    # Index
+   # Populates the reverse index
+   # Computes all weights and TFIDF
    def processDocuments(self):
       print "Processing documents"
       for key in self.documents:
          self.index.processDocument(self.documents[key])
       self.index.computeAllTFIDF()
-      
+   
+   # Wrapper functions over data structures contained in Category instance   
    def getSizeOfVocabulary(self):
       return self.index.getSizeOfVocabulary()
    def getWeightOf(self, word, field):
@@ -85,6 +95,4 @@ class Category:      # Class that abstracts a category of documents
 class Group(Category):
    def __init__(self, key):
       self.key = key
-      self.documents = {}   
-
-
+      self.documents = {}

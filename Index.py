@@ -8,7 +8,6 @@ class DocumentEntry:             # Index -> Dictionary of Terms -> TermEntry -> 
       return self.count   
    def incrementCount(self):
       self.count += 1
-      
    def getTFIDF(self):
       return self.tfidf   
    def setTFIDF(self, tfidf):
@@ -31,18 +30,11 @@ class TermEntry:                 # Index -> Dictionary of Terms -> TermEntry
       self.weight = 0.0
       self.uniqueWeight = 0.0
 
-   # Methods operating on the documentList
-   def getNumDocuments(self):
-      return len(self.documents)
-   def addDocument(self, document):
-      if self.hasDocumentEntry(document):         
-         return False
-      self.documents[document.getKey()] = DocumentEntry()
-      return True
-   def getDocumentList(self):
-      return self.documents
-   
    # Basic accessor methods
+   def getTotalCount(self):
+      return self.totalCount
+   def incrementTotalCount(self):
+      self.totalCount += 1      
    def getWeight(self):
       return self.weight
    def getUniqueWeight(self):
@@ -52,7 +44,24 @@ class TermEntry:                 # Index -> Dictionary of Terms -> TermEntry
    def setUniqueWeight(self, weight):
       self.uniqueWeight = float(weight)
    
+   # Methods operating on the documentList
+   def getNumDocuments(self):
+      return len(self.documents)
+   def getDocumentList(self):
+      return self.documents
+   
+   # Methods operating on the groupList
+   def getGroupList(self):
+      return self.groups
+   
    # Methods operating on a particular documentEntry
+   def hasDocumentEntry(self, document):
+      return document.getKey() in self.documents
+   def addDocument(self, document):
+      if self.hasDocumentEntry(document):         
+         return False
+      self.documents[document.getKey()] = DocumentEntry()
+      return True
    def getDocumentEntryCount(self, document):        # Get count of tokens of this term in a given document
       if self.hasDocumentEntry(document):
          return self.documents[document.getKey()].getCount()
@@ -62,29 +71,24 @@ class TermEntry:                 # Index -> Dictionary of Terms -> TermEntry
          self.documents[document.getKey()].incrementCount()
          return True
       return False
-   def getTFIDF(self, document):                # Get the TFIDF for of term for a particular document
+   def getTFIDF(self, document):                # Get the TFIDF of term for a particular document
       if self.hasDocumentEntry(document):
          return self.documents[document.getKey()].getTFIDF()
       return 0.0
-   def setTFIDF(self, document, tfidf):         # Set the TFIDF for of term for a particular document
+   def setTFIDF(self, document, tfidf):         # Set the TFIDF of term for a particular document
       if self.hasDocumentEntry(document):
          self.documents[document.getKey()].setTFIDF(tfidf)
          return True
       return False
-   def hasDocumentEntry(self, document):
-      return document.getKey() in self.documents
-
-   # Methods operating on the groupList
-   def getGroups(self):
-      return self.groups
+   
+      
+   # Methods operating on a particular groupEntry
    def addgroup(self, group):
       if self.hasGroupEntry(group):
          return False
       self.groups[group.getKey()] = GroupEntry()
    def hasGroupEntry(self, group):
       return group.getKey() in self.groups
-      
-   # Methods operating on a particular groupEntry
    def getGroupEntryCount(self, group):
       if self.hasGroupEntry(group):
          return self.groups[group.getKey()].getCount()
@@ -95,10 +99,6 @@ class TermEntry:                 # Index -> Dictionary of Terms -> TermEntry
          return True
       return False      
    
-   def getTotalCount(self):
-      return self.totalCount
-   def incrementTotalCount(self):
-      self.totalCount += 1      
       
 class Index:                     # Index for a collection
    def __init__(self, category):

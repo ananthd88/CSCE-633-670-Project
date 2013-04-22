@@ -3,13 +3,10 @@ import re
 import math
 
 class Document:         # Class which abstracts documents
-   numOfDocsCreated = 0 # Keeps track number of documents created, 
-                        # also used to give unique IDs to each document
    def __init__(self, dictionary):
       # Expects the dictionary to have all the necessary keys
       # TODO:  It might be better to maintain title and description as a list of
       #        words
-      Document.numOfDocsCreated += 1
       self.key                = dictionary["Id"]
       self.title              = dictionary["Title"]
       self.description        = dictionary["FullDescription"]
@@ -46,11 +43,22 @@ class Document:         # Class which abstracts documents
    def setGroup(self, group):
       self.group = group
       
+   # Get words
    def getBagOfWords(self, field = "description"):
       return {
          "title": re.split('[ ]+', self.title),
          "description": re.split('[ ]+', self.description)
       }[field]
+   def getWordDictionary(self, string):
+      words = re.split('[ ]+', string)
+      dictionary = {}
+      for word in words:
+         count = dictionary.get(word, False)
+         if count:
+            dictionary[word] += 1
+         else:
+            dictionary[word] = 1
+      return dictionary
    
    # Methods that operate on the document's TFIDF vector
    def getTFIDF(self, word):
@@ -135,16 +143,6 @@ class Document:         # Class which abstracts documents
             string += "\nSalaryNorm = "  + str(self.salary)
       return string
    
-   def getWordDictionary(self, string):
-      words = re.split('[ ]+', string)
-      dictionary = {}
-      for word in words:
-         count = dictionary.get(word, False)
-         if count:
-            dictionary[word] += 1
-         else:
-            dictionary[word] = 1
-      return dictionary
       
    def document2VowpalData(self):
       # TODO:  To be modified
