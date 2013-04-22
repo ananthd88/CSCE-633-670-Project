@@ -132,7 +132,7 @@ class Index:                     # Index for a collection
       
    def processDocument(self, document):
       self.incrementNumDocuments()
-      group = False
+      group = document.getGroup()
       # Title
       bagOfWords = document.getBagOfWords("title")
       for word in bagOfWords:
@@ -212,7 +212,7 @@ class Index:                     # Index for a collection
       if self.inVocabulary(word):
          return self.vocabulary[word].getUniqueWeight()
       return 0.0
-   def getTFIDFWeightOf(self, word, field = "description", document):
+   def getTFIDFWeightOf(self, word, document, field = "description"):
       word = {"title": "t_" + word, "description": "d_" + word}[field]
       if self.inVocabulary(word):
          return self.vocabulary[word].getTFIDF(document)

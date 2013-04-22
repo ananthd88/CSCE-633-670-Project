@@ -8,6 +8,7 @@ class Category:      # Class that abstracts a category of documents
       self.documents = {}
       self.companies = {}
       self.groups = {}
+      self.groupBoundaries = []
       self.runningMean = 0.0
       self.runningVariance = 0.0
       self.index = Index.Index(self)      
@@ -84,6 +85,47 @@ class Category:      # Class that abstracts a category of documents
          self.index.processDocument(self.documents[key])
       self.index.computeAllTFIDF()
    
+   
+   # Groups
+   def assignGroup(self, document):
+      salary = document.getSalary()
+      count = 1
+      assigned = False
+      for boundary in self.groupBoundaries:
+         if salary < boundary:
+            document.setGroup(self.groups[count])
+            self.groups[count].addDocument(document)
+            assigned = True
+            break
+         count += 1
+      if assigned == False:
+         document.setGroup(self.groups[count])
+         self.groups[count].addDocument(document)
+   def createGroups(self):
+      salaries = []
+      for key in self.documents:
+         document = self.documents[key]
+         salaries.append(document.getSalary())
+      salaries = sorted(salaries)
+      groupSize = self.getNumDocuments()/5
+      count = 0
+      group = 0
+      boundaries = []
+      for salary in salaries:
+         if count % groupSize == 0:
+            print "%f" % (salary)
+            boundaries.append(salary)
+            count  = 0
+         count += 1
+      boundaries = boundaries[1:-1]
+      count = 1
+      for boundary in boundaries:
+         self.groups[count] = Group(count)
+         count += 1
+      self.groups[count] = Group(count)
+      for key in self.documents:
+         document = self.documents[key]
+         self.assignGroup(document)
    # Wrapper functions over data structures contained in Category instance   
    def getSizeOfVocabulary(self):
       return self.index.getSizeOfVocabulary()
@@ -96,3 +138,6 @@ class Group(Category):
    def __init__(self, key):
       self.key = key
       self.documents = {}
+      self.runningMean = 0.0
+      self.runningVariance = 0.0
+      

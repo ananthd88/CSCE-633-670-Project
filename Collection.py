@@ -29,6 +29,8 @@ class Collection:
       self.addCategory(categoryName)
       category = self.getCategory(False, categoryName)
       companyName = dictionary.get("Company", "").lower()
+      if companyName == "":
+         companyName = "NA"
       self.addCompany(companyName)
       company = self.getCompany(False, companyName)
       category.addCompany(company)
@@ -110,9 +112,9 @@ class Collection:
    # Companies
    def hasCompany(self, key, name):
       if key:
-         return self.companies.get(key, False) == True
+         return key in self.companies
       elif name:
-         return self.companyNameToKey.get(name, False) == True
+         return name in self.companyNameToKey
       return False
    def addCompany(self, name):
       if self.hasCompany(False, name):

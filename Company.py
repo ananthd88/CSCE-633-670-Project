@@ -9,6 +9,6 @@ class Company:
       return self.key == other.key
    
    def getKey(self):
-      return self.Key
+      return self.key
    def getName(self):
       return self.name

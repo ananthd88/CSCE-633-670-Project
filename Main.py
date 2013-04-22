@@ -28,6 +28,9 @@ def main():
    print "No. of docs in training set = %d" % (category.getNumDocuments())
    print "Mean salary = %f" % (category.getMean())
    print "Std deviation of salary = %f" % (category.getStdDeviation())
+   #category.createGroups()
+   #raw_input("Press any key to exit...")
+   #exit()
    category.processDocuments()
    print "Done"
    do = True
@@ -43,6 +46,6 @@ def main():
          print "Unique word weight = %f" % (category.getUniqueWeightOf(words[1], field))         
       else:
          do = False
-            
+     
 if __name__ == '__main__':
     main()
