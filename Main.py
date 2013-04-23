@@ -37,7 +37,7 @@ def main():
    print "Std deviation of salary = %f" % (category.getStdDeviation())
    
    timer = Timer.Timer("Creating groups and assigning documents")
-   category.createGroups(4)
+   category.createGroups(5)
    for key in category.getDocuments():
       document = category.getDocument(key)
       category.assignGroup(document)
