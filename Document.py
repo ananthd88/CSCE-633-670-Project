@@ -51,7 +51,8 @@ class Document:         # Class which abstracts documents
    def getBagOfWords(self, field = "description"):
       return {
          "title": re.split('[ ]+', self.title),
-         "description": re.split('[ ]+', self.description)
+         "description": re.split('[ ]+', self.description),
+         "all": re.split('[ ]+', self.title) + re.split('[ ]+', self.description)
       }[field]
    def getWordDictionary(self, string):
       words = re.split('[ ]+', string)
@@ -65,7 +66,11 @@ class Document:         # Class which abstracts documents
       return dictionary
    def getSetOfWords(self):
       return set(self.tfidfVector.keys())
-      
+   
+   # Features
+   def getFeatures(self):
+      return self.tfidfVector.keys()
+
    # Methods that operate on the document's TFIDF vector
    def getTFIDF(self, word):
       documentEntry = self.tfidfVector.get(word, 0)

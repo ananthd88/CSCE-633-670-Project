@@ -201,67 +201,29 @@ class Collection:
       print "Purity for the clustering = %f" % (self.purity)
       print "RSS for clustering = %lf" % (self.rss)
       
-   def naiveBayesClassifier(self, test):
+   def naiveBayesClassifier(self, train, document):
       print "Starting naive bayes classifier"
-      train = self
       numTrainDocs = float(train.getNumDocuments())
       sizeTrainVocabulary = train.getSizeOfVocabulary()
-      for document in test.documents:
-         maxLogProbability = None
-         predictedCategory = False
-         for category in train.categories:
-            logProbability  = 0.0
-            # P(c) = (No. of docs in c)/(No. of training docs)
-            logProbability += math.log(float(category.getNumDocs()), 2) - math.log(numTrainDocs, 2) 
-            bagOfWords = document.getBagOfWords()
-            for word in bagOfWords:
-               if len(word):
-                  # Add one smoothing
-                  logProbability += math.log(float(train.getNumTokensInCategory(word, category)) + 1.0, 2)
-            logProbability -= float(len(bagOfWords)) * math.log(float((category.getTotalTokens() + sizeTrainVocabulary)), 2)
-            if maxLogProbability < logProbability:
-               maxLogProbability = logProbability
-               predictedCategory = category
-            # If the log of probabilities for two classes are equal
-            elif maxLogProbability == logProbability:
-               # Select the class which has more documents assigned to it
-               # which would imply a greater value for P(c), 
-               # since P(c) = (Num of docs classified as c)/(Num of docs in collection)
-               if predictedCategory.getNumDocs() < category.getNumDocs():
-                  predictedCategory = category
-         predictedCategory = test.getCategory(predictedCategory.getCode())
-         document.setPredictedCategory(predictedCategory)
-         realCategory = document.getCategory()
-         if realCategory == predictedCategory:
-            realCategory.incrementTP()
-         else:
-            realCategory.incrementFN()
-            predictedCategory.incrementFP()
-            
-      # Print out the documents prefixed with their assigned category
-      for predictedCategory in test.categories:
-         print "Predicted Category: %s\nNo. of docs: %d\n" % (test.getCategoryName(predictedCategory.getCode()), predictedCategory.getNumDocs())
-         for document in predictedCategory.getMembers():
-            print "\t(%s) : %s" % (test.getCategoryName(document.getCategory().getCode()), document.getTitle())
-      
-      sumTP = 0
-      sumFP = 0
-      sumFN = 0
-      for category in test.getCategories():
-         category.computeTN(test.getNumDocuments())
-         category.printConfusionMatrix(test.getCategoryName(category.getCode()))
-         sumTP += category.getTP()
-         sumFP += category.getFP()
-         sumFN += category.getFN()
-         # Important to clear the metrics once you are done calculating
-         category.resetMetrics()
-      print "Sum(TP) = %d" %(sumTP)
-      print "Sum(FP) = %d" %(sumFP)
-      print "Sum(FN) = %d" %(sumFN)
-      print "Total documents in test set = %d" % (test.getNumDocuments())
-      test.maPrecision = float(sumTP)/float(sumTP + sumFP)
-      test.maRecall = float(sumTP)/float(sumTP + sumFN)
-      maf1 = test.getMAF1()
-      print "Microaveraged F1 for test set = %f" % (maf1)
-      print "Finished naive bayes classification"
-      return maf1
+      maxLogProbability = None
+      predictedGroup = False
+      for group in train.groups:
+         logProbability  = 0.0
+         # P(c) = (No. of docs in c)/(No. of training docs)
+         logProbability += math.log(float(group.getNumDocs()), 2) - math.log(numTrainDocs, 2) 
+         bagOfWords = document.getBagOfWords("all")
+         for word in bagOfWords:
+            # Add one smoothing
+            logProbability += math.log(float(train.getNumTokensInGroup(word, group)) + 1.0, 2)
+         logProbability -= float(len(bagOfWords)) * math.log(float((group.getTotalTokens() + sizeTrainVocabulary)), 2)
+         if maxLogProbability < logProbability:
+            maxLogProbability = logProbability
+            predictedGroup = group
+         # If the log of probabilities for two classes are equal
+         elif maxLogProbability == logProbability:
+            # Select the class which has more documents assigned to it
+            # which would imply a greater value for P(c), 
+            # since P(c) = (Num of docs classified as c)/(Num of docs in collection)
+            if predictedGroup.getNumDocuments() < group.getNumDocuments():
+               predictedGroup = group
+      return predictedGroup

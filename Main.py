@@ -3,6 +3,7 @@
 import Collection
 import Document
 import Timer
+import Classifier
 import csv
 import sys
 import math
@@ -20,11 +21,13 @@ def main():
       for row in reader:
          if row["Category"].lower() != "it jobs":
             continue
-         document = trainSet.addDocument(row)
          count += 1
          if count % 10000 == 0:
             print "%d-th document" % (count)
-      
+         # TODO: Remove restriction (read only every 100th document)
+         #if count % 100 == 0:
+         #   document = trainSet.addDocument(row)
+         document = trainSet.addDocument(row)
    finally:
       inputfile.close()
       timer.stop()
@@ -34,7 +37,7 @@ def main():
    print "Std deviation of salary = %f" % (category.getStdDeviation())
    
    timer = Timer.Timer("Creating groups and assigning documents")
-   category.createGroups(5)
+   category.createGroups(4)
    for key in category.getDocuments():
       document = category.getDocument(key)
       category.assignGroup(document)
@@ -56,6 +59,22 @@ def main():
    importantWords = category.index.findImportantWords(2470, 13930)
    timer.stop()
    
+   timer = Timer.Timer("NB Predictions")
+   nb = Classifier.NaiveBayesClassifier(category)
+   predictions = []
+   truths = []
+   for docKey in category.getDocuments():
+      document = category.getDocument(docKey)
+      prediction = nb.predict(document)
+      truth = document.getGroup().getKey()
+      #print "%d (%d, %d)" % (document.getKey(), document.getGroup().getKey(), prediction)
+      predictions.append(prediction)
+      truths.append(truth)
+   metrics = nb.getMetrics(predictions, truths)
+   print "Precision  = %f" % (metrics["precision"])
+   print "Recall     = %f" % (metrics["recall"])
+   print "MAF1       = %f" % (metrics["maf1"])
+   timer.stop()
    #timer = Timer.Timer("Computing X, Y")
    #dictionary = category.getXY(importantWords)
    #timer.stop()

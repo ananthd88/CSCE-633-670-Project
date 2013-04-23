@@ -137,6 +137,7 @@ class Index:                     # Index for a collection
          return 0
       return self.firstVocabulary[word]
    def addToken(self, word, document, group):
+      # TODO: This is the place to increment total token count in category
       if not self.inVocabulary(word):
          self.vocabulary[word] = TermEntry()
          if word[0] == 't':
@@ -152,6 +153,7 @@ class Index:                     # Index for a collection
          if not termEntry.hasGroupEntry(group):
             termEntry.addGroup(group)
          termEntry.incrementGroupEntryCount(group)
+         group.incrementTotalTokenCount()
    def findImportantWords(self, numTitleWords, numDescriptionWords):
       array = []
       titleCount = 0
@@ -306,6 +308,16 @@ class Index:                     # Index for a collection
       if not self.isInDocument(word, document):
          return 0
       return self.vocabulary[word].getDocumentCount(document)
+   
+   # TODO: To be re-written
+   # Word should have t_ or d_ markers
+   def getNumTokensInGroup(self, word, group):
+      if not self.inVocabulary(word):
+         return 0
+      return self.vocabulary[word].getGroupEntryCount(group)
+
+   
+   
    #def getCategoryList(self, word):
    #   if not self.inVocabulary(word):
    #      return {}
