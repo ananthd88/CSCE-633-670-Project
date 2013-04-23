@@ -36,8 +36,8 @@ class Collection:
       category.addCompany(company)
       
       dictionary["Id"]              = int(dictionary.get("Id", "0"))
-      dictionary["Title"]           = self.filterString(dictionary.get("Title", "").lower())
-      dictionary["FullDescription"] = self.filterString(dictionary.get("FullDescription", "").lower())
+      dictionary["Title"]           = self.filterString(dictionary.get("Title", "").lower(), category)
+      dictionary["FullDescription"] = self.filterString(dictionary.get("FullDescription", "").lower(), category)
       dictionary["LocationRaw"]     = dictionary.get("LocationRaw", "").lower()
       dictionary["Category"]        = category
       dictionary["Company"]         = company
@@ -45,7 +45,7 @@ class Collection:
       document = Document.Document(dictionary)
       category.addDocument(document)
       return document
-   def filterString(self, string):
+   def filterString(self, string, category):
       # Split only at whitespaces
       chunks = re.split('\s+', string)
       bag = []
@@ -56,8 +56,9 @@ class Collection:
          if patterns.search(chunk):
             continue
          # Split each chunk
-         words = re.split('[^a-zA-Z0-9\+\-]+', chunk)
+         words = re.split('[^a-zA-Z\+\-]+', chunk)
          for word in words:
+            category.index.addToFirstVocabulary(word)
             if word in stopwords:
                continue
             else:

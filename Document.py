@@ -28,6 +28,10 @@ class Document:         # Class which abstracts documents
       return self.key
    def getTitle(self):
       return self.title
+   def setTitle(self, title):
+      self.title = title
+   def setDescription(self, description):
+      self.description = description
    def getDescription(self):
       return self.description
    def getLocation(self):
@@ -67,6 +71,12 @@ class Document:         # Class which abstracts documents
          return documentEntry.getTFIDF()
       else:
          return 0.0
+   def getCount(self, word):
+      documentEntry = self.tfidfVector.get(word, 0)
+      if documentEntry:
+         return documentEntry.getCount()
+      else:
+         return 0
    def computeTFIDFLength(self):
       self.tfidfLength  = 0.0
       for word in self.tfidfVector:
@@ -116,7 +126,7 @@ class Document:         # Class which abstracts documents
       self.tfidfVector[word] = documentEntry
    
    # Miscellaneous stringify methods for document
-   def document2String(self, keys = {'all': 1}):
+   def toString(self, keys = {'all': 1}):
       string = ""
       if keys.get("all", False):
          string += "Id = " + str(self.key)
@@ -125,7 +135,10 @@ class Document:         # Class which abstracts documents
          string += "\nLocation = " + self.location
          string += "\nCompany = " + self.company.getName()
          string += "\nCategory = " + self.category.getName()
-         string += "\nSalaryNorm = " + str(self.salary)
+         string += "\nSalary = " + str(self.salary)
+         string += "\nGroup = " + str(self.group.getKey()) 
+         string += "\n\tMean group salary = " + str(self.group.getMean())
+         string += "\n\tStd dev of group salary = " + str(self.group.getStdDeviation())
       else:
          if keys.get("id", False):
             string += "Id = " + str(self.id)

@@ -1,5 +1,6 @@
 import Index
 import math
+from sklearn.naive_bayes import MultinomialNB
 
 class Category:      # Class that abstracts a category of documents
    def __init__(self, key, name):
@@ -78,13 +79,22 @@ class Category:      # Class that abstracts a category of documents
    
    # Index
    # Populates the reverse index
-   # Computes all weights and TFIDF
    def processDocuments(self):
-      print "Processing documents"
+      print "Processing documents - Creating the reverse index"
       for key in self.documents:
          self.index.processDocument(self.documents[key])
+      self.index.reverseIndexDone = True
+      print "Total no. of words in vocabulary = %d" % (self.index.getSizeOfVocabulary())
+      print "Total no. of title words in vocabulary = %d" % (self.index.numTitleWords)
+      print "Total no. of description words in vocabulary = %d" % (self.index.numDescriptionWords)
+   # Computes all weights
+   def computeAllWeights(self):
+      print "Computing All Weights"
+      self.index.computeAllWeights()
+   # Computes all  TFIDF
+   def computeAllTFIDF(self):
+      print "Computing All TFIDF"
       self.index.computeAllTFIDF()
-   
    
    # Groups
    def assignGroup(self, document):
@@ -100,32 +110,63 @@ class Category:      # Class that abstracts a category of documents
          count += 1
       if assigned == False:
          document.setGroup(self.groups[count])
-         self.groups[count].addDocument(document)
-   def createGroups(self):
+         self.groups[count].addDocument(document)         
+   def createGroups(self, numGroups):
       salaries = []
       for key in self.documents:
          document = self.documents[key]
          salaries.append(document.getSalary())
       salaries = sorted(salaries)
-      groupSize = self.getNumDocuments()/5
+      groupSize = self.getNumDocuments()/numGroups
       count = 0
       group = 0
       boundaries = []
       for salary in salaries:
          if count % groupSize == 0:
-            print "%f" % (salary)
             boundaries.append(salary)
             count  = 0
          count += 1
       boundaries = boundaries[1:-1]
+      self.groupBoundaries = boundaries
       count = 1
       for boundary in boundaries:
          self.groups[count] = Group(count)
          count += 1
       self.groups[count] = Group(count)
+   
+   def mNBlearnXY(self, X, Y):
+      clf = MultinomialNB()
+      clf.fit(X, Y)
+      return clf
+   
+   
+   
+   def getXY(self, importantWords):
+      output = {}
+      numFeatures = len(importantWords)
+      numDocuments = self.getNumDocuments()
+      output["X"] = [[0.0] * numFeatures] * numDocuments
+      output["Y"] = [0] * numDocuments
+      docCount = 0
       for key in self.documents:
-         document = self.documents[key]
-         self.assignGroup(document)
+         document = self.getDocument(key)
+         featureArray = output["X"][docCount]
+         wordCount = 0
+         nonzeroWords = 0
+         for word in importantWords:
+            # Fill features with TFIDF, 
+            # can be replaced with document.getCount(word) instead
+            featureArray[wordCount] = document.getCount(word)
+            #featureArray[wordCount] = document.getTFIDF(word)
+            if featureArray[wordCount] != 0.0:
+               nonzeroWords += 1
+            wordCount += 1
+         output["Y"][docCount] = document.getGroup().getKey()
+         #if output["Y"][docCount] != 0:
+         #   print "Y[%d] Group - %d, nonzeroWords = %d" % (docCount, output["Y"][docCount], nonzeroWords)
+         docCount += 1
+      return output
+         
    # Wrapper functions over data structures contained in Category instance   
    def getSizeOfVocabulary(self):
       return self.index.getSizeOfVocabulary()

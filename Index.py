@@ -83,7 +83,7 @@ class TermEntry:                 # Index -> Dictionary of Terms -> TermEntry
    
       
    # Methods operating on a particular groupEntry
-   def addgroup(self, group):
+   def addGroup(self, group):
       if self.hasGroupEntry(group):
          return False
       self.groups[group.getKey()] = GroupEntry()
@@ -105,6 +105,14 @@ class Index:                     # Index for a collection
       self.vocabulary = {}       # Hashtable of terms pointing to a TermEntry
       self.numDocuments = 0           # Total number of docs indexed
       self.category = category
+      self.firstVocabulary = {}
+      self.importantWords = {}
+      self.numTitleWords = 0
+      self.numDescriptionWords = 0
+      self.reverseIndexDone = False
+      self.computedTFIDF = False
+      self.computedWeights = False
+      
    # Methods that operate on the number of documents
    def getNumDocuments(self):
       return self.numDocuments
@@ -118,35 +126,98 @@ class Index:                     # Index for a collection
       return len(self.vocabulary)
    def inVocabulary(self, word):
       return word in self.vocabulary
+   def inFirstVocabulary(self, word):
+      return word in self.firstVocabulary
+   def addToFirstVocabulary(self, word):
+      if not self.inFirstVocabulary(word):
+         self.firstVocabulary[word] = 0
+      self.firstVocabulary[word] += 1
+   def getCountInFirstVocabulary(self, word):
+      if not self.inFirstVocabulary(word):
+         return 0
+      return self.firstVocabulary[word]
    def addToken(self, word, document, group):
       if not self.inVocabulary(word):
          self.vocabulary[word] = TermEntry()
+         if word[0] == 't':
+            self.numTitleWords += 1
+         elif word[0] == 'd':
+            self.numDescriptionWords += 1
       termEntry = self.vocabulary[word]
+      termEntry.incrementTotalCount()
       if document:
          termEntry.addDocument(document) # Not added if already exists in list
          termEntry.incrementDocumentEntryCount(document)
-      #if group:
-      #   if not termEntry.hasGroup(group):
-      #      termEntry.adGroup(group)
-      #   termEntry.incrementGroupEntryCount(group)
-      
+      if group:
+         if not termEntry.hasGroupEntry(group):
+            termEntry.addGroup(group)
+         termEntry.incrementGroupEntryCount(group)
+   def findImportantWords(self, numTitleWords, numDescriptionWords):
+      array = []
+      titleCount = 0
+      descriptionCount = 0
+      for key in sorted(self.vocabulary, key = lambda word: math.fabs(self.vocabulary[word].getUniqueWeight()), reverse=True):
+         if key[0] == 't' and titleCount < numTitleWords:
+            array.append(key)
+            titleCount += 1
+         elif key[0] == 'd' and descriptionCount < numDescriptionWords:
+            array.append(key)
+            descriptionCount += 1
+         if titleCount == numTitleWords and descriptionCount == numDescriptionWords:
+            break
+      return array
+   
+   # Document Processing
    def processDocument(self, document):
       self.incrementNumDocuments()
       group = document.getGroup()
       # Title
       bagOfWords = document.getBagOfWords("title")
+      title = ""
       for word in bagOfWords:
-         word = "t_" + word
-         self.addToken(word, document, group)
-         
+         if self.getCountInFirstVocabulary(word) == 1:
+            result = self.wordSplitter(word)
+            if result:
+               word1, word2 = result
+               title += " " + word1 + " " + word2
+               word1 = "t_" + word1
+               word2 = "t_" + word2
+               self.addToken(word1, document, group)
+               self.addToken(word2, document, group)               
+         else:
+            title += " " + word
+            word = "t_" + word
+            self.addToken(word, document, group)            
+      document.setTitle(title)      
       # Description
       bagOfWords = document.getBagOfWords("description")
+      description = ""
       for word in bagOfWords:
-         word = "d_" + word
-         self.addToken(word, document, group)
-   
-   def computeAllTFIDF(self):
-      print "Computing All TFIDF"
+         if self.getCountInFirstVocabulary(word) == 1:
+            result = self.wordSplitter(word)
+            if result:
+               word1, word2 = result
+               description += " " + word1 + " " + word2
+               word1 = "d_" + word1
+               word2 = "d_" + word2
+               self.addToken(word1, document, group)
+               self.addToken(word2, document, group)               
+         else:
+            description += " " + word
+            word = "d_" + word
+            self.addToken(word, document, group)            
+      document.setDescription(description)
+   def wordSplitter(self, word):
+      length = len(word)
+      for i in range(1, length):
+         word1    = word[:i]
+         word2    = word[i:]
+         if self.getCountInFirstVocabulary(word1) > 1 and self.getCountInFirstVocabulary(word2) > 1:
+            return [word1, word2]
+      return False
+
+   def computeAllWeights(self):
+      # Compute Weights and Unique Weights
       wordcloud = {}
       wordcloudUnique = {}
       for docKey in self.category.getDocuments():
@@ -183,15 +254,17 @@ class Index:                     # Index for a collection
                wordcloudUnique[word] = [0.0, 0.0]
             wordcloudUnique[word][0] += 1.0
             wordcloudUnique[word][1] = wordcloudUnique[word][1] + (pctChange/len(wordsSet) - wordcloudUnique[word][1])/wordcloudUnique[word][0]
+      for word in self.vocabulary.keys():
+         self.vocabulary[word].setWeight(wordcloud[word][1])
+         self.vocabulary[word].setUniqueWeight(wordcloudUnique[word][1])
+      self.computedWeights = True
          
-      
-      
+   def computeAllTFIDF(self):
+      # Compute TFIDF
       numDocs = self.getNumDocuments()
       logNumDocs = math.log(float(numDocs), 2)
       vocabulary = self.getVocabulary()
       for word in vocabulary.keys():
-         self.vocabulary[word].setWeight(wordcloud[word][1])
-         self.vocabulary[word].setUniqueWeight(wordcloudUnique[word][1])
          documentList = self.getDocumentListFor(word)
          df = len(documentList)
          logdf = logNumDocs - math.log(float(df), 2)
@@ -201,7 +274,19 @@ class Index:                     # Index for a collection
             tfidf = logtf * logdf
             documentEntry.setTFIDF(tfidf)
             self.category.getDocument(docKey).joinToIndex(word, documentEntry)
+      self.computedTFIDF = True
    
+   # Wrappers to operate on data in Index -> TermEntry
+   def getDocumentListFor(self, word):
+      if not self.inVocabulary(word):
+         return {}
+      return self.vocabulary[word].getDocumentList()
+   def numDocumentsContaining(self, word):
+      return len(self.getDocumentList(word))
+   def isInDocument(self, word, document):
+      if not self.inVocabulary(word):
+         return False
+      return self.vocabulary[word].isDocumentPresent(document)
    def getWeightOf(self, word, field = "description"):
       word = {"title": "t_" + word, "description": "d_" + word}[field]
       if self.inVocabulary(word):
@@ -217,17 +302,10 @@ class Index:                     # Index for a collection
       if self.inVocabulary(word):
          return self.vocabulary[word].getTFIDF(document)
       return 0.0
-   # Wrappers to operate on data in Index -> TermEntry
-   def getDocumentListFor(self, word):
-      if not self.inVocabulary(word):
-         return {}
-      return self.vocabulary[word].getDocumentList()
-   def numDocumentsContaining(self, word):
-      return len(self.getDocumentList(word))
-   def isInDocument(self, word, document):
-      if not self.inVocabulary(word):
-         return False
-      return self.vocabulary[word].isDocumentPresent(document)
+   def getDocumentCount(self, word, document):
+      if not self.isInDocument(word, document):
+         return 0
+      return self.vocabulary[word].getDocumentCount(document)
    #def getCategoryList(self, word):
    #   if not self.inVocabulary(word):
    #      return {}
@@ -240,21 +318,12 @@ class Index:                     # Index for a collection
    #   return self.vocabulary[word].isCategoryPresent(category)
    
    # Wrappers to operate on data in Index -> TermEntry -> DocumentEntry
-   def getDocumentCount(self, word, document):
-      if not self.isInDocument(word, document):
-         return 0
-      return self.vocabulary[word].getDocumentCount(document)
       
    # Wrappers to operate on data in Index -> TermEntry -> CategoryEntry
    #def getCategoryCount(self, word, category):
    #   if not self.isInCategory(word, category):
    #      return 0
    #   return self.vocabulary[word].getCategoryCount(category)
-            
-   
-   
-   
-   
    
    #def getMI(self, word, category):
    #   if self.vocabulary.get(word, False):
