@@ -9,6 +9,7 @@ import sys
 import math
 import re
 
+# Just a comment
       
 def main():
    timer0 = Timer.Timer("Entire program")
