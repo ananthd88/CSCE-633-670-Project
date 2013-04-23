@@ -63,7 +63,9 @@ class Document:         # Class which abstracts documents
          else:
             dictionary[word] = 1
       return dictionary
-   
+   def getSetOfWords(self):
+      return set(self.tfidfVector.keys())
+      
    # Methods that operate on the document's TFIDF vector
    def getTFIDF(self, word):
       documentEntry = self.tfidfVector.get(word, 0)
