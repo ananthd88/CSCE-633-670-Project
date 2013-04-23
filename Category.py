@@ -17,8 +17,9 @@ class Category:      # Class that abstracts a category of documents
       return hash(self.key)
    def __eq__(self, other):
       return self.key == other.key
+
    
-   # Basic accessor methods
+   #The basic accessor methods
    def getKey(self):
       return self.key
    def getName(self):
