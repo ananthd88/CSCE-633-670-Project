@@ -50,16 +50,3 @@ class SpellCorrector():
 
 
 
-
-#mydict={}
-#mydict = {'badboy':[3,4], 'badbyo':[1,3], 'invesment':[1,2], 'investment':[5,1]}
-
-#lt = [x for x in mydict if abs(mydict[x][0]) == 1]
-#for each_word in lt:
-#	del mydict[each_word]	
-#	corrected_word = correct(each_word,mydict)
-#	print corrected_word,each_word
-#	if corrected_word == each_word:
-#		mydict[each_word] = [1,0]
-#	else:
-#		mydict[corrected_word][0] += 1
