@@ -27,6 +27,9 @@ class Category:      # Class that abstracts a category of documents
    def getMean(self):
       return self.runningMean
    def getVariance(self):
+      numDocs = self.getNumDocuments()
+      if numDocs < 2:
+         return 0.0
       return self.runningVariance/(self.getNumDocuments() - 1)
    def getStdDeviation(self):
       return math.sqrt(self.getVariance())
