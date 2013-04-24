@@ -102,6 +102,10 @@ class Category:      # Class that abstracts a category of documents
       self.index.computeAllTFIDF()
    
    # Groups
+   def getGroup(self, key):
+      if key >= 0 and key < len(self.groups):
+         return self.groups[key]
+      return False
    def getNumGroups(self):
       return len(self.groups)
    def getNumClasses(self):

@@ -20,7 +20,8 @@ def main():
       reader = csv.DictReader(inputfile)
       count = 0
       for row in reader:
-         if row["Category"].lower() != "it jobs":
+         #if row["Category"].lower() != "it jobs":
+         if row["Category"].lower() != "engineering jobs":
             continue
          count += 1
          if count % 10000 == 0:
@@ -38,7 +39,7 @@ def main():
    print "Std deviation of salary = %f" % (category.getStdDeviation())
    
    timer = Timer.Timer("Creating groups and assigning documents")
-   category.createGroups(5)
+   category.createGroups(10)
    for key in category.getDocuments():
       document = category.getDocument(key)
       category.assignGroup(document)
@@ -64,9 +65,15 @@ def main():
    nb = Classifier.NaiveBayesClassifier(category)
    predictions = []
    truths = []
+   meanError = 0.0
+   count = 0.0
    for docKey in category.getDocuments():
+      count += 1.0
       document = category.getDocument(docKey)
       prediction = nb.predict(document)
+      predictedSalary = category.getGroup(prediction).getMean()
+      actualSalary = document.getSalary()
+      meanError = meanError + (math.fabs(predictedSalary - actualSalary) - meanError) / count
       truth = document.getGroup().getKey()
       #print "%d (%d, %d)" % (document.getKey(), document.getGroup().getKey(), prediction)
       predictions.append(prediction)
@@ -75,6 +82,9 @@ def main():
    print "Precision  = %f" % (metrics["precision"])
    print "Recall     = %f" % (metrics["recall"])
    print "MAF1       = %f" % (metrics["maf1"])
+   print "RSS        = %d" % (metrics["rss"])
+   print "Avg error  = %f" % (metrics["meanerr"])
+   print "Avg error in salary prediction = %f" % (meanError)
    timer.stop()
    #timer = Timer.Timer("Computing X, Y")
    #dictionary = category.getXY(importantWords)

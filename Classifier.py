@@ -54,8 +54,11 @@ class Classifier:
       sumTP = 0
       sumFP = 0
       sumFN = 0
+      RSS = 0
+      meanerr = 0.0
+      count = 0
       for prediction, truth in itertools.izip(predictions, truths):
-         
+         count += 1
          if prediction == truth:
             self.classes[prediction].incrementTP()
             sumTP += 1
@@ -64,6 +67,8 @@ class Classifier:
             self.classes[truth].incrementFN()
             sumFP += 1
             sumFN += 1
+            RSS += (prediction - truth)**2
+         meanerr += (abs(prediction - truth) - meanerr)/count
       precision = float(sumTP)/float(sumTP + sumFP)
       recall = float(sumTP)/float(sumTP + sumFN)
       if precision == 0.0 or recall == 0.0:
@@ -74,6 +79,8 @@ class Classifier:
       results["precision"] = precision
       results["recall"] = recall
       results["maf1"] = maf1
+      results["rss"] = RSS
+      results["meanerr"] = meanerr
       self.resetMetrics()
       return results
       
@@ -84,23 +91,17 @@ class NaiveBayesClassifier(Classifier):
       maxLogProbability = None
       predictedClass = False
       for classKey in self.trainingSet.getClasses():
-         #print "class = %d - %d/%d" % (classKey, self.trainingSet.getNumDocumentsInClass(classKey), numTrainDocs)
          logProbability  = 0.0
          # P(c) = (No. of docs in c)/(No. of training docs)
-         logProbability += math.log(float(self.trainingSet.getNumDocumentsInClass(classKey)), 2) - math.log(numTrainDocs, 2) 
+         logProbability += math.log(float(self.trainingSet.getNumDocumentsInClass(classKey) + 1), 2)# - math.log(numTrainDocs, 2) 
          features = document.getFeatures()
          bagOfWords = document.getBagOfWords("all")
          for feature in features:
             # Add one smoothing
-            #print feature + " - " + str(self.trainingSet.getNumTokensInClass(feature, classKey)) + " | ",
             logProbability += math.log(float(self.trainingSet.getNumTokensInClass(feature, classKey)) + 1.0, 2)
          logProbability -= float(len(features)) * math.log(float((self.trainingSet.getTotalTokens(classKey) + sizeTrainVocabulary)), 2)
          if maxLogProbability < logProbability:
             maxLogProbability = logProbability
-            #if predictedClass:
-            #   print "Changing prediction %d -> %d" % (predictedClass, classKey)
-            #else:
-            #   print "prediction = %d" % (classKey)
             predictedClass = classKey
             
          # If the log of probabilities for two classes are equal
@@ -109,10 +110,5 @@ class NaiveBayesClassifier(Classifier):
             # which would imply a greater value for P(c), 
             # since P(c) = (Num of docs classified as c)/(Num of docs in collection)
             if self.trainingSet.getNumDocumentsInClass(predictedClass) < self.trainingSet.getNumDocumentsInClass(classKey):
-               #if predictedClass:
-               #   print "$Changing prediction %d -> %d" % (predictedClass, classKey)
-               #else:
-               #   print "$prediction = %d" % (classKey)
                predictedClass = classKey
-      return predictedClass
-      
+      return predictedClass      

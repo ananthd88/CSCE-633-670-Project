@@ -200,30 +200,3 @@ class Collection:
       print "Finished %d-clustering in %d iterations" % (k, iterations)
       print "Purity for the clustering = %f" % (self.purity)
       print "RSS for clustering = %lf" % (self.rss)
-      
-   def naiveBayesClassifier(self, train, document):
-      print "Starting naive bayes classifier"
-      numTrainDocs = float(train.getNumDocuments())
-      sizeTrainVocabulary = train.getSizeOfVocabulary()
-      maxLogProbability = None
-      predictedGroup = False
-      for group in train.groups:
-         logProbability  = 0.0
-         # P(c) = (No. of docs in c)/(No. of training docs)
-         logProbability += math.log(float(group.getNumDocs()), 2) - math.log(numTrainDocs, 2) 
-         bagOfWords = document.getBagOfWords("all")
-         for word in bagOfWords:
-            # Add one smoothing
-            logProbability += math.log(float(train.getNumTokensInGroup(word, group)) + 1.0, 2)
-         logProbability -= float(len(bagOfWords)) * math.log(float((group.getTotalTokens() + sizeTrainVocabulary)), 2)
-         if maxLogProbability < logProbability:
-            maxLogProbability = logProbability
-            predictedGroup = group
-         # If the log of probabilities for two classes are equal
-         elif maxLogProbability == logProbability:
-            # Select the class which has more documents assigned to it
-            # which would imply a greater value for P(c), 
-            # since P(c) = (Num of docs classified as c)/(Num of docs in collection)
-            if predictedGroup.getNumDocuments() < group.getNumDocuments():
-               predictedGroup = group
-      return predictedGroup
