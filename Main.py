@@ -26,9 +26,9 @@ def main():
          if count % 10000 == 0:
             print "%d-th document" % (count)
          # TODO: Remove restriction (read only every 100th document)
-         #if count % 100 == 0:
-         #   document = trainSet.addDocument(row)
-         document = trainSet.addDocument(row)
+         if count % 100 == 0:
+            document = trainSet.addDocument(row)
+         #document = trainSet.addDocument(row)
    finally:
       inputfile.close()
       timer.stop()
