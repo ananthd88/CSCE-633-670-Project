@@ -20,8 +20,8 @@ def main():
       reader = csv.DictReader(inputfile)
       count = 0
       for row in reader:
-         #if row["Category"].lower() != "it jobs":
-         if row["Category"].lower() != "engineering jobs":
+         if row["Category"].lower() != "it jobs":
+         #if row["Category"].lower() != "engineering jobs":
             continue
          count += 1
          if count % 10000 == 0:
