@@ -173,36 +173,45 @@ class Index:                     # Index for a collection
             break
       return array
 
-   
+
+ 
    # Document Processing
    def processDocument(self, document):
       self.incrementNumDocuments()
       group = document.getGroup()
       spellchecker = Spell_Corrector.SpellCorrector()
+      spellchecker.setDictionary(self.firstVocabulary)
       # Title
       bagOfWords = document.getBagOfWords("title")
       title = ""
       for word in bagOfWords:
          if self.getCountInFirstVocabulary(word) == 1:
-            result = self.wordSplitter(word)
+	    result = self.wordSplitter(word)
             if result:
                word1, word2 = result
-               title += " " + word1 + " " + word2
-               word1 = "t_" + word1
-               word2 = "t_" + word2
-               self.addToken(word1, document, group)
-               self.addToken(word2, document, group)
+	       if word1:	
+                  title += " " + word1
+	          word1 = "t_" + word1
+		  self.addToken(word1, document, group)
+	       if word2:
+		  title += " " + word2
+                  word2 = "t_" + word2 
+                  self.addToken(word2, document, group)
 	    else:
-	       correct_word = spellchecker.correct(word, self.firstVocabulary)
+	       print word
+	       correct_word = spellchecker.correct(word)
+	       print correct_word
 	       if word != correct_word:
+		  title += " " + correct_word
+		  correct_word = "t_" + correct_word
 	          self.addToken(correct_word, document, group)
 
          else:
-            
 	    title += " " + word
             word = "t_" + word
             self.addToken(word, document, group)            
       document.setTitle(title)      
+      
       # Description
       bagOfWords = document.getBagOfWords("description")
       description = ""
@@ -211,14 +220,21 @@ class Index:                     # Index for a collection
             result = self.wordSplitter(word)
             if result:
                word1, word2 = result
-               description += " " + word1 + " " + word2
-               word1 = "d_" + word1
-               word2 = "d_" + word2
-               self.addToken(word1, document, group)
-               self.addToken(word2, document, group)
+	       if word1:	
+                  description += " " + word1
+	          word1 = "d_" + word1
+		  self.addToken(word1, document, group)
+	       if word2:
+		  description += " " + word2
+                  word2 = "d_" + word2 
+                  self.addToken(word2, document, group)
 	    else:
-	       correct_word = spellchecker.correct(word, self.firstVocabulary)
+	       print "Desc :: ",word
+	       correct_word = spellchecker.correct(word)
+	       print "Desc :: ",correct_word
 	       if word != correct_word:
+		  description += " " + correct_word
+		  correct_word = "d_" + correct_word
 	          self.addToken(correct_word, document, group)	
          else:
             description += " " + word
@@ -234,11 +250,11 @@ class Index:                     # Index for a collection
          if self.getCountInFirstVocabulary(word1) > 1 and self.getCountInFirstVocabulary(word2) > 1:
             return [word1, word2]
 	 elif word1 in self.stopwords and self.getCountInFirstVocabulary(word2) > 1:
-	    return ["", word2]
+	    return [False, word2]
 	 elif self.getCountInFirstVocabulary(word1) > 1 and word2 in self.stopwords:
-	    return [word1, ""]
+	    return [word1, False]
   	 elif word1 in self.stopwords and word2 in self.stopwords:
-	    return False
+	    return [False,False]
       return False
 
    def computeAllWeights(self):
