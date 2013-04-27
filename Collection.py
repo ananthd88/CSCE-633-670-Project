@@ -12,7 +12,8 @@ import requests
 import json
 
 class Collection:
-   def __init__(self):
+   def __init__(self, name):
+      self.name = name
       self.numDocument = 0
       self.categoryNameToKey = {}
       self.companyNameToKey = {}
@@ -22,6 +23,8 @@ class Collection:
       self.maRecall = 0.0
       
    # Documents   
+   def getName(self):
+      return self.name
    def getNumDocuments(self):
       return self.NumDocuments
    def addDocument(self, dictionary):
@@ -34,28 +37,28 @@ class Collection:
       self.addCompany(companyName)
       company = self.getCompany(False, companyName)
       category.addCompany(company)
-      
-      dictionary["Id"]              = int(dictionary.get("Id", "0"))
-      dictionary["Title"]           = self.filterString(dictionary.get("Title", "").lower(), category)
-      dictionary["FullDescription"] = self.filterString(dictionary.get("FullDescription", "").lower(), category)
-      dictionary["LocationRaw"]     = dictionary.get("LocationRaw", "").lower()
-      dictionary["Category"]        = category
-      dictionary["Company"]         = company
-      dictionary["SalaryNormalized"]= float(dictionary.get("SalaryNormalized", 0.0))
-      document = Document.Document(dictionary)
+      document = {}
+      document["Id"]              = int(dictionary.get("Id", "0"))
+      document["Title"]           = self.filterString(dictionary.get("Title", "").lower(), category)
+      document["FullDescription"] = self.filterString(dictionary.get("FullDescription", "").lower(), category)
+      document["LocationRaw"]     = dictionary.get("LocationRaw", "").lower()
+      document["Category"]        = category
+      document["Company"]         = company
+      document["SalaryNormalized"]= float(dictionary.get("SalaryNormalized", 0.0))
+      document = Document.Document(document)
       category.addDocument(document)
       return document
    def filterString(self, string, category):
       # Split only at whitespaces
       chunks = re.split('\s+', string)
       bag = []
-      patterns = re.compile(r'\/|www|\.com|http|:|\.uk')
+      patterns = re.compile(r'www\.|\.com|http|:|\.uk|\.net|\.org|\.edu')
       stopwords = ["", ".", "a", "an", "and", "are", "as", "at", "be", "for", "have", "if", "in", "is", "of", "on", "or", "our", "s", "the", "this", "to", "we", "will", "with", "work", "you", "your"]
       # Remove chunks that are URLs
       for chunk in chunks:
          if patterns.search(chunk):
             continue
-         # Split each chunk
+         #words = re.split('[^0-9a-zA-Z\+\-]+', chunk)
          words = re.split('[^a-zA-Z\+\-]+', chunk)
          for word in words:
             category.index.addToFirstVocabulary(word)
@@ -71,8 +74,16 @@ class Collection:
             try:
                index = bag.index("experience", index)
                phrase = bag[max(0, index - 4):min(index + 5, len(bag))]
-               phrase = "Experience phrase = " + " ".join(phrase)
-               raw_input(phrase)
+               for word in phrase:
+                  if word == "years" or word == "one" or word == "two" or word == "three" or word == "four" or word == "five" or word == "six" or word == "seven" or word == "eight" or word == "nine" or word == "ten" or word == "eleven":
+                     print "((%s)) " % (word),
+                  if re.search('[a-zA-Z\+\-]', word):
+                     continue
+                  else:
+                     print "(%s) " % (word),
+                     #break                 
+               phrase = " ".join(phrase)
+               print phrase
                index += 1
             except ValueError:
                break
@@ -109,6 +120,22 @@ class Collection:
    def getCategoryKey(self, name):
       # Expects name in lower case
       return self.categoryNameToKey.get(name, False)
+   def processDocuments(self):
+      for (key, category) in self.categories.items():
+         category.processDocuments()
+   def computeAllWeights(self):
+      for (key, category) in self.categories.items():
+         category.computeAllWeights()
+   def computeAllTFIDF(self):
+      for (key, category) in self.categories.items():
+         category.computeAllTFIDF()
+   def computeAllMI(self):
+      for (key, category) in self.categories.items():
+         category.computeAllMI()
+   def createGroups(self):
+      for (key, category) in self.categories.items():
+         category.createGroups(10)
+   
    
    # Companies
    def hasCompany(self, key, name):

@@ -93,13 +93,20 @@ class NaiveBayesClassifier(Classifier):
       for classKey in self.trainingSet.getClasses():
          logProbability  = 0.0
          # P(c) = (No. of docs in c)/(No. of training docs)
-         logProbability += math.log(float(self.trainingSet.getNumDocumentsInClass(classKey) + 1), 2)# - math.log(numTrainDocs, 2) 
+         logProbability += math.log(float(self.trainingSet.getNumDocumentsInClass(classKey) + 1), 2)
          features = document.getFeatures()
-         bagOfWords = document.getBagOfWords("all")
+         numFeaturesUsed = 0.0
          for feature in features:
+            #mi = self.trainingSet.index.getMI(feature, self.trainingSet.getGroup(classKey))
+            #if not self.trainingSet.isImportantFeature(feature):
+            #   continue
+            #if mi < 0.0001:
+            #   continue
+            numFeaturesUsed += 1.0
             # Add one smoothing
-            logProbability += math.log(float(self.trainingSet.getNumTokensInClass(feature, classKey)) + 1.0, 2)
-         logProbability -= float(len(features)) * math.log(float((self.trainingSet.getTotalTokens(classKey) + sizeTrainVocabulary)), 2)
+            #mi = self.trainingSet.index.getX2(feature, self.trainingSet.getGroup(classKey))
+            logProbability += math.log(float(self.trainingSet.getNumTokensInClass(feature, classKey)) + 1.0, 2)# + math.log(mi + 1.0, 2)
+         logProbability -= numFeaturesUsed * math.log(float((self.trainingSet.getTotalTokens(classKey) + sizeTrainVocabulary)), 2)
          if maxLogProbability < logProbability:
             maxLogProbability = logProbability
             predictedClass = classKey
@@ -111,4 +118,10 @@ class NaiveBayesClassifier(Classifier):
             # since P(c) = (Num of docs classified as c)/(Num of docs in collection)
             if self.trainingSet.getNumDocumentsInClass(predictedClass) < self.trainingSet.getNumDocumentsInClass(classKey):
                predictedClass = classKey
-      return predictedClass      
+      return predictedClass
+class SVM(Classifier):
+   def train(self,X, Y):
+      return
+   def predict(self, document):
+      
+      return

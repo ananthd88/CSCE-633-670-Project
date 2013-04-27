@@ -16,11 +16,20 @@ class DocumentEntry:             # Index -> Dictionary of Terms -> TermEntry -> 
 class GroupEntry:                # Index -> Dictionary of Terms -> TermEntry -> List Of GroupEntry -> GroupEntry
    def __init__(self):
       self.count = 0             # Count of number of times tokens of this term appears in a particular group
-   
+      self.documents = {}
+      
    def getCount(self):
       return self.count
    def incrementCount(self):
       self.count += 1
+   def addDocument(self, document):
+      if document not in self.documents:
+         self.documents[document] = 0
+      self.documents[document] += 1
+   def hasDocument(self, document):
+      return document in self.documents
+   def getNumDocuments(self):
+      return len(self.documents)
       
 class TermEntry:                 # Index -> Dictionary of Terms -> TermEntry
    def __init__(self):
@@ -29,6 +38,10 @@ class TermEntry:                 # Index -> Dictionary of Terms -> TermEntry
       self.totalCount   = 0      # Count of total number of tokens of this term in all the documents in the collection
       self.weight = 0.0
       self.uniqueWeight = 0.0
+      self.miValues = []         # List of Mutual Information (MI) values for this term in each category
+                                 # indexed by the category's code
+      self.x2Values = []         # List of X2 values for this term in each category
+                                 # indexed by the category's code
 
    # Basic accessor methods
    def getTotalCount(self):
@@ -97,9 +110,16 @@ class TermEntry:                 # Index -> Dictionary of Terms -> TermEntry
       if self.hasGroupEntry(group):
          self.groups[group.getKey()].incrementCount()
          return True
-      return False      
-   
+      return False
+   def getGroupEntry(self, group):
+      return self.groups.get(group.getKey(), False)
       
+   # MI and X2 values
+   def initializeMIValues(self, numGroups):
+      self.miValues = [0.0] * numGroups
+   def initializeX2Values(self, numGroups):
+      self.x2Values = [0.0] * numGroups
+   
 class Index:                     # Index for a collection
    def __init__(self, category):
       self.vocabulary = {}       # Hashtable of terms pointing to a TermEntry
@@ -153,6 +173,7 @@ class Index:                     # Index for a collection
          if not termEntry.hasGroupEntry(group):
             termEntry.addGroup(group)
          termEntry.incrementGroupEntryCount(group)
+         termEntry.getGroupEntry(group).addDocument(document)
          group.incrementTotalTokenCount()
    def findImportantWords(self, numTitleWords, numDescriptionWords):
       array = []
@@ -167,8 +188,14 @@ class Index:                     # Index for a collection
             descriptionCount += 1
          if titleCount == numTitleWords and descriptionCount == numDescriptionWords:
             break
+      self.importantWords = set(array)
       return array
-   
+   def getImportantWords(self):
+      return self.importantWords
+   def isImportantFeature(self, feature):
+      return feature in self.importantWords
+
+
    # Document Processing
    def processDocument(self, document):
       self.incrementNumDocuments()
@@ -278,6 +305,13 @@ class Index:                     # Index for a collection
             self.category.getDocument(docKey).joinToIndex(word, documentEntry)
       self.computedTFIDF = True
    
+   def computeAllMI(self):
+      # Compute all MI and X2
+      self.initializeAllMI(self.category.getNumGroups())
+      for word in self.vocabulary:
+         for group in self.category.getGroups():
+            self.computeMI(word, group)
+
    # Wrappers to operate on data in Index -> TermEntry
    def getDocumentListFor(self, word):
       if not self.inVocabulary(word):
@@ -317,68 +351,50 @@ class Index:                     # Index for a collection
       return self.vocabulary[word].getGroupEntryCount(group)
 
    
-   
-   #def getCategoryList(self, word):
-   #   if not self.inVocabulary(word):
-   #      return {}
-   #   return self.vocabulary[word].getCategoryList()
-   #def numCategoriesContaining(self, word):
-   #   return len(self.getCategoryList(word))
-   #def isInCategory(self, word, category):
-   #   if not self.inVocabulary(word):
-   #      return False
-   #   return self.vocabulary[word].isCategoryPresent(category)
-   
-   # Wrappers to operate on data in Index -> TermEntry -> DocumentEntry
+   # MI and X2 values
+   def initializeAllMI(self, numGroups):
+      for word in self.vocabulary:
+         self.vocabulary[word].initializeMIValues(numGroups)
+         self.vocabulary[word].initializeX2Values(numGroups)
+   def getMI(self, word, group):
+      if self.inVocabulary(word):
+         return self.vocabulary[word].miValues[group.getKey()]
+      return 0.0
+   def getX2(self, word, group):
+      if self.inVocabulary(word):
+         return self.vocabulary[word].x2Values[group.getKey()]
+      return 0.0
+   def computeMI(self, word, group):
+      N  = float(self.getNumDocuments())
+      T  = float(self.vocabulary[word].getNumDocuments())
+      C  = float(group.getNumDocuments())
+      groupEntry = self.vocabulary[word].getGroupEntry(group)
+      if groupEntry:
+         TC = groupEntry.getNumDocuments()
+      else:
+         TC = 0.0
       
-   # Wrappers to operate on data in Index -> TermEntry -> CategoryEntry
-   #def getCategoryCount(self, word, category):
-   #   if not self.isInCategory(word, category):
-   #      return 0
-   #   return self.vocabulary[word].getCategoryCount(category)
-   
-   #def getMI(self, word, category):
-   #   if self.vocabulary.get(word, False):
-   #      return self.vocabulary[word].miValues[category.getCode()]
-   #   return 0.0
-   #def getX2(self, word, category):
-   #   if self.vocabulary.get(word, False):
-   #      return self.vocabulary[word].x2Values[category.getCode()]
-   #   return 0.0
-   #def computeMI(self, word, category):
-   #   N  = float(self.getNumDocs())
-   #   T  = float(self.vocabulary[word].getNumDocs())
-   #   C  = float(category.getNumDocs())
-   #   categoryEntry = self.vocabulary[word].getCategoryList().get(category, False)
-   #   if not categoryEntry:
-   #      TC = 0.0
-   #   else:
-   #      TC = float(categoryEntry.getNumDocs())
-   #   
-   #   NXX = N + 1.0
-   #   N00 = N - T - C + TC + 1.0
-   #   N01 = C - TC + 1.0
-   #   N10 = T - TC + 1.0
-   #   N11 = TC + 1.0
-   #   NX0 = N - C + 1.0
-   #   NX1 = C + 1.0
-   #   N0X = N - T + 1.0
-   #   N1X = T + 1.0
-   #   
-   #   mi  = (N11/NXX)*math.log((NXX*N11)/(N1X*NX1)) 
-   #   mi += (N01/NXX)*math.log((NXX*N01)/(N0X*NX1)) 
-   #   mi += (N10/NXX)*math.log((NXX*N10)/(N1X*NX0)) 
-   #   mi += (N00/NXX)*math.log((NXX*N00)/(N0X*NX0))
-   #   
-   #   x2 = (N00 + N01 + N10 + N11)
-   #   x2 *= (N11*N00 - N10*N10)
-   #   x2 *= (N11*N00 - N10*N10)
-   #   x2 /= (N11 + N01)
-   #   x2 /= (N11 + N10)
-   #   x2 /= (N10 + N00)
-   #   x2 /= (N01 + N00)
-   #   self.vocabulary[word].miValues[category.getCode()] = mi
-   #   self.vocabulary[word].x2Values[category.getCode()] = x2
+      NXX = N + 1.0
+      N00 = N - T - C + TC + 1.0
+      N01 = C - TC + 1.0
+      N10 = T - TC + 1.0
+      N11 = TC + 1.0
+      NX0 = N - C + 1.0
+      NX1 = C + 1.0
+      N0X = N - T + 1.0
+      N1X = T + 1.0
       
+      mi  = (N11/NXX)*math.log((NXX*N11)/(N1X*NX1)) 
+      mi += (N01/NXX)*math.log((NXX*N01)/(N0X*NX1)) 
+      mi += (N10/NXX)*math.log((NXX*N10)/(N1X*NX0)) 
+      mi += (N00/NXX)*math.log((NXX*N00)/(N0X*NX0))
       
-   
+      x2 = (N00 + N01 + N10 + N11)
+      x2 *= (N11*N00 - N10*N10)
+      x2 *= (N11*N00 - N10*N10)
+      x2 /= (N11 + N01)
+      x2 /= (N11 + N10)
+      x2 /= (N10 + N00)
+      x2 /= (N01 + N00)
+      self.vocabulary[word].miValues[group.getKey()] = mi
+      self.vocabulary[word].x2Values[group.getKey()] = x2

@@ -1,5 +1,6 @@
 import Index
 import math
+from scipy.sparse import csr_matrix, lil_matrix
 
 class Category:      # Class that abstracts a category of documents
    def __init__(self, key, name):
@@ -103,30 +104,38 @@ class Category:      # Class that abstracts a category of documents
    def computeAllTFIDF(self):
       print "Computing All TFIDF"
       self.index.computeAllTFIDF()
+   def computeAllMI(self):
+      print "Computing All MI and X2"
+      self.index.computeAllMI()
+   def assignGroups(self):
+      for docKey in documents:
+         document = self.getDocument(docKey)
+         self.assignGroup(document)
+   
    
    # Groups
    def getGroup(self, key):
       if key >= 0 and key < len(self.groups):
          return self.groups[key]
       return False
+   def getGroups(self):
+      return self.groups
    def getNumGroups(self):
       return len(self.groups)
    def getNumClasses(self):
       return self.getNumGroups()
-   def assignGroup(self, document):
+   def determineGroup(self, document):
       salary = document.getSalary()
       count = 0
-      assigned = False
       for boundary in self.groupBoundaries:
          if salary < boundary:
-            document.setGroup(self.groups[count])
-            self.groups[count].addDocument(document)
-            assigned = True
-            break
+            return count            
          count += 1
-      if assigned == False:
-         document.setGroup(self.groups[count])
-         self.groups[count].addDocument(document)         
+      return count
+   def assignGroup(self, document):
+      groupKey = self.determineGroup(document)
+      document.setGroup(self.groups[groupKey])
+      self.groups[groupKey].addDocument(document)      
    def createGroups(self, numGroups):
       salaries = []
       for key in self.documents:
@@ -160,17 +169,19 @@ class Category:      # Class that abstracts a category of documents
    
    def getXY(self, importantWords):
       output = {}
-      numFeatures = len(importantWords)
+      #numFeatures = len(importantWords)
+      numFeatures = self.getSizeOfVocabulary()
       numDocuments = self.getNumDocuments()
-      output["X"] = [[0.0] * numFeatures] * numDocuments
-      output["Y"] = [0] * numDocuments
+      X = [[0.0] * numFeatures] * numDocuments
+      Y = [0] * numDocuments
       docCount = 0
       for key in self.documents:
          document = self.getDocument(key)
-         featureArray = output["X"][docCount]
+         featureArray = X[docCount]
          wordCount = 0
          nonzeroWords = 0
-         for word in importantWords:
+         #for word in importantWords:
+         for word in self.getVocabulary():
             # Fill features with TFIDF, 
             # can be replaced with document.getCount(word) instead
             featureArray[wordCount] = document.getCount(word)
@@ -178,15 +189,19 @@ class Category:      # Class that abstracts a category of documents
             if featureArray[wordCount] != 0.0:
                nonzeroWords += 1
             wordCount += 1
-         output["Y"][docCount] = document.getGroup().getKey()
+         Y[docCount] = document.getGroup().getKey()
          #if output["Y"][docCount] != 0:
          #   print "Y[%d] Group - %d, nonzeroWords = %d" % (docCount, output["Y"][docCount], nonzeroWords)
          docCount += 1
+      X = lil_matrix(X)
+      output = {"X": X, "Y": Y}
       return output
          
    # Wrapper functions over data structures contained in Category instance   
    def getSizeOfVocabulary(self):
       return self.index.getSizeOfVocabulary()
+   def getVocabulary(self):
+      return self.index.getVocabulary()
    def getWeightOf(self, word, field):
       return self.index.getWeightOf(word, field)
    def getUniqueWeightOf(self, word, field):
@@ -202,7 +217,9 @@ class Category:      # Class that abstracts a category of documents
       if groupKey < 0 or groupKey > self.getNumGroups():
          return 0
       return self.groups[groupKey].getTotalTokenCount()
-
+   def isImportantFeature(self, feature):
+      return self.index.isImportantFeature(feature)
+      
 class Group(Category):
    def __init__(self, key):
       self.key = key
