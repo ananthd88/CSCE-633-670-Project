@@ -108,7 +108,7 @@ class Category:      # Class that abstracts a category of documents
       print "Computing All MI and X2"
       self.index.computeAllMI()
    def assignGroups(self):
-      for docKey in documents:
+      for docKey in self.documents:
          document = self.getDocument(docKey)
          self.assignGroup(document)
    
@@ -165,8 +165,6 @@ class Category:      # Class that abstracts a category of documents
          return 0
       return self.groups[groupKey].getNumDocuments()
    
-   
-   
    def getXY(self, importantWords):
       output = {}
       #numFeatures = len(importantWords)
@@ -190,6 +188,7 @@ class Category:      # Class that abstracts a category of documents
                nonzeroWords += 1
             wordCount += 1
          Y[docCount] = document.getGroup().getKey()
+         print "%d -> %d" % (docCount, Y[docCount])
          #if output["Y"][docCount] != 0:
          #   print "Y[%d] Group - %d, nonzeroWords = %d" % (docCount, output["Y"][docCount], nonzeroWords)
          docCount += 1
@@ -219,6 +218,8 @@ class Category:      # Class that abstracts a category of documents
       return self.groups[groupKey].getTotalTokenCount()
    def isImportantFeature(self, feature):
       return self.index.isImportantFeature(feature)
+   def findImportantWords(self, fraction):
+      self.index.findImportantWords(fraction)
       
 class Group(Category):
    def __init__(self, key):

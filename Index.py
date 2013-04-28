@@ -1,4 +1,5 @@
 import math
+import Spell_Corrector
 class DocumentEntry:             # Index -> Dictionary of Terms -> TermEntry -> List Of DocumentEntry -> DocumentEntry
    def __init__(self):
       self.count = 0             # Count of number of times tokens of this term appears in a particular document
@@ -126,12 +127,15 @@ class Index:                     # Index for a collection
       self.numDocuments = 0           # Total number of docs indexed
       self.category = category
       self.firstVocabulary = {}
-      self.importantWords = {}
+      self.importantWords = set()
       self.numTitleWords = 0
       self.numDescriptionWords = 0
       self.reverseIndexDone = False
       self.computedTFIDF = False
       self.computedWeights = False
+      self.stopwords = ["", ".", "a", "an", "and", "are", "as", "at", "be", "for", "have", "if", "in", "is", "of", "on", "or", "our", "s", "the", "this", "to", "we", "will", "with", "work", "you", "your"] 
+   
+
       
    # Methods that operate on the number of documents
    def getNumDocuments(self):
@@ -175,7 +179,8 @@ class Index:                     # Index for a collection
          termEntry.incrementGroupEntryCount(group)
          termEntry.getGroupEntry(group).addDocument(document)
          group.incrementTotalTokenCount()
-   def findImportantWords(self, numTitleWords, numDescriptionWords):
+   def findImportantWords(self, fraction):
+      numTitleWords, numDescriptionWords = self.numTitleWords/fraction, self.numDescriptionWords/fraction
       array = []
       titleCount = 0
       descriptionCount = 0
@@ -196,46 +201,71 @@ class Index:                     # Index for a collection
       return feature in self.importantWords
 
 
+ 
    # Document Processing
    def processDocument(self, document):
       self.incrementNumDocuments()
       group = document.getGroup()
+      spellchecker = Spell_Corrector.SpellCorrector()
+      spellchecker.setDictionary(self.firstVocabulary)
       # Title
       bagOfWords = document.getBagOfWords("title")
-      title = ""
+      title = []
       for word in bagOfWords:
          if self.getCountInFirstVocabulary(word) == 1:
             result = self.wordSplitter(word)
             if result:
                word1, word2 = result
-               title += " " + word1 + " " + word2
-               word1 = "t_" + word1
-               word2 = "t_" + word2
-               self.addToken(word1, document, group)
-               self.addToken(word2, document, group)               
+               if word1:   
+                  title.append(word1)
+                  word1 = "t_" + word1
+                  self.addToken(word1, document, group)
+               if word2:
+                  title.append(word2)
+                  word2 = "t_" + word2 
+                  self.addToken(word2, document, group)
+            else:
+               correct_word = spellchecker.correct(word)
+               if word != correct_word:
+                  print "%s -> %s" % (word, correct_word)
+                  title.append(correct_word)
+                  correct_word = "t_" + correct_word
+                  self.addToken(correct_word, document, group)
          else:
-            title += " " + word
+            title.append(word)
             word = "t_" + word
-            self.addToken(word, document, group)            
-      document.setTitle(title)      
+            self.addToken(word, document, group)
+      document.setTitle(title)
+      
       # Description
       bagOfWords = document.getBagOfWords("description")
-      description = ""
+      description = []
       for word in bagOfWords:
          if self.getCountInFirstVocabulary(word) == 1:
             result = self.wordSplitter(word)
             if result:
                word1, word2 = result
-               description += " " + word1 + " " + word2
-               word1 = "d_" + word1
-               word2 = "d_" + word2
-               self.addToken(word1, document, group)
-               self.addToken(word2, document, group)               
+               if word1:   
+                  description.append(word1)
+                  word1 = "d_" + word1
+                  self.addToken(word1, document, group)
+               if word2:
+                  description.append(word2)
+                  word2 = "d_" + word2 
+                  self.addToken(word2, document, group)
+            else:
+               correct_word = spellchecker.correct(word)
+               if word != correct_word:
+                  print "%s -> %s" % (word, correct_word)
+                  description.append(correct_word)
+                  correct_word = "d_" + correct_word
+                  self.addToken(correct_word, document, group)   
          else:
-            description += " " + word
+            description.append(word)
             word = "d_" + word
             self.addToken(word, document, group)            
       document.setDescription(description)
+   
    def wordSplitter(self, word):
       length = len(word)
       for i in range(1, length):
@@ -243,6 +273,12 @@ class Index:                     # Index for a collection
          word2    = word[i:]
          if self.getCountInFirstVocabulary(word1) > 1 and self.getCountInFirstVocabulary(word2) > 1:
             return [word1, word2]
+         elif word1 in self.stopwords and self.getCountInFirstVocabulary(word2) > 1:
+            return [False, word2]
+         elif self.getCountInFirstVocabulary(word1) > 1 and word2 in self.stopwords:
+            return [word1, False]
+         elif word1 in self.stopwords and word2 in self.stopwords:
+            return [False,False]
       return False
 
    def computeAllWeights(self):
@@ -349,6 +385,7 @@ class Index:                     # Index for a collection
       if not self.inVocabulary(word):
          return 0
       return self.vocabulary[word].getGroupEntryCount(group)
+
 
    
    # MI and X2 values

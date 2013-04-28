@@ -63,7 +63,14 @@ class Document:         # Class which abstracts documents
          description = self.getBagOfWords("description")
          for word in description:
             bag.append("d_" + word)
-         return bag
+      elif field == "title":
+         title = self.getBagOfWords("title")
+         for word in title:
+            bag.append("t_" + word)
+      elif field == "description":
+         description = self.getBagOfWords("description")
+         for word in description:
+            bag.append("d_" + word)      
       return bag
    def getWordDictionary(self, string):
       words = re.split('[ ]+', string)

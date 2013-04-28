@@ -61,12 +61,12 @@ class Collection:
          #words = re.split('[^0-9a-zA-Z\+\-]+', chunk)
          words = re.split('[^a-zA-Z\+\-]+', chunk)
          for word in words:
-            category.index.addToFirstVocabulary(word)
             if word in stopwords:
                continue
             else:
+               category.index.addToFirstVocabulary(word)
                bag.append(word)
-      newString = " ".join(bag)
+      #newString = " ".join(bag)
       index = 0
       while False:
       #while True:
@@ -87,7 +87,7 @@ class Collection:
                index += 1
             except ValueError:
                break
-      return newString
+      return bag
    
    # Categories
    def hasCategory(self, key, name):
@@ -100,7 +100,6 @@ class Collection:
       if self.hasCategory(False, name):      
          return False      
       key = len(self.categories) + 1 # Keys run from 1 to num of categories
-      print "\tKey = %d, Name  = %s" % (key, name)
       category = Category.Category(key, name)
       self.categoryNameToKey[name] = key
       self.categories[key] = category
@@ -134,9 +133,15 @@ class Collection:
          category.computeAllMI()
    def createGroups(self):
       for (key, category) in self.categories.items():
-         category.createGroups(10)
-   
-   
+         # TODO: Change hard-coded value
+         category.createGroups(5)
+   def assignGroups(self):
+      for (key, category) in self.categories.items():
+         category.assignGroups()
+   def findImportantWords(self, fraction):
+      for (key, category) in self.categories.items():
+         category.findImportantWords(fraction)
+         
    # Companies
    def hasCompany(self, key, name):
       if key:
