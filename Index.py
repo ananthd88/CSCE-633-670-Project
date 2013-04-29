@@ -122,7 +122,7 @@ class TermEntry:                 # Index -> Dictionary of Terms -> TermEntry
       self.x2Values = [0.0] * numGroups
    
 class Index:                     # Index for a collection
-   def __init__(self, category):
+   def __init__(self, category, indexWithMarkers = False):
       self.vocabulary = {}       # Hashtable of terms pointing to a TermEntry
       self.numDocuments = 0           # Total number of docs indexed
       self.category = category
@@ -133,6 +133,7 @@ class Index:                     # Index for a collection
       self.reverseIndexDone = False
       self.computedTFIDF = False
       self.computedWeights = False
+      self.indexWithMarkers = False
       self.stopwords = ["", ".", "a", "an", "and", "are", "as", "at", "be", "for", "have", "if", "in", "is", "of", "on", "or", "our", "s", "the", "this", "to", "we", "will", "with", "work", "you", "your"] 
    
 
@@ -162,6 +163,8 @@ class Index:                     # Index for a collection
       return self.firstVocabulary[word]
    def addToken(self, word, document, group):
       # TODO: This is the place to increment total token count in category
+      if len(word) == 0:
+         return
       if not self.inVocabulary(word):
          self.vocabulary[word] = TermEntry()
          if word[0] == 't':
@@ -179,22 +182,36 @@ class Index:                     # Index for a collection
          termEntry.incrementGroupEntryCount(group)
          termEntry.getGroupEntry(group).addDocument(document)
          group.incrementTotalTokenCount()
-   def findImportantWords(self, fraction):
-      numTitleWords, numDescriptionWords = self.numTitleWords/fraction, self.numDescriptionWords/fraction
+   def findImportantWords2(self, fraction):
+      numImportantWords = self.getSizeOfVocabulary()/fraction
       array = []
-      titleCount = 0
-      descriptionCount = 0
+      count = 0
       for key in sorted(self.vocabulary, key = lambda word: math.fabs(self.vocabulary[word].getUniqueWeight()), reverse=True):
-         if key[0] == 't' and titleCount < numTitleWords:
-            array.append(key)
-            titleCount += 1
-         elif key[0] == 'd' and descriptionCount < numDescriptionWords:
-            array.append(key)
-            descriptionCount += 1
-         if titleCount == numTitleWords and descriptionCount == numDescriptionWords:
+         array.append(key)
+         count += 1
+         if count == numImportantWords:
             break
       self.importantWords = set(array)
       return array
+   def findImportantWords(self, fraction):
+      if self.indexWithMarkers:
+         numTitleWords, numDescriptionWords = self.numTitleWords/fraction, self.numDescriptionWords/fraction
+         array = []
+         titleCount = 0
+         descriptionCount = 0
+         for key in sorted(self.vocabulary, key = lambda word: math.fabs(self.vocabulary[word].getUniqueWeight()), reverse=True):
+            if key[0] == 't' and titleCount < numTitleWords:
+               array.append(key)
+               titleCount += 1
+            elif key[0] == 'd' and descriptionCount < numDescriptionWords:
+               array.append(key)
+               descriptionCount += 1
+            if titleCount == numTitleWords and descriptionCount == numDescriptionWords:
+               break
+         self.importantWords = set(array)
+         return array
+      else:
+         return findImportantWords2(fraction)
    def getImportantWords(self):
       return self.importantWords
    def isImportantFeature(self, feature):
@@ -203,6 +220,17 @@ class Index:                     # Index for a collection
 
  
    # Document Processing
+   def processDocument2(self, document):
+      self.incrementNumDocuments()
+      group = document.getGroup()
+      if self.indexWithMarkers:
+         document.setIndexWithMarkers()
+      else:
+         document.unsetIndexWithMarkers()
+      bagOfWords = document.getBagOfWords2("all")
+      for word in bagOfWords:
+         self.addToken(word, document, group)
+   # TODO: Deprecated code, to be removed
    def processDocument(self, document):
       self.incrementNumDocuments()
       group = document.getGroup()
@@ -289,32 +317,28 @@ class Index:                     # Index for a collection
          document = self.category.getDocument(docKey)
          pctChange = (document.getSalary()/self.category.getMean() - 1.0) * 100
          # Title
-         words = document.getBagOfWords("title")
+         words = document.getBagOfWords2("title")
          for word in words:
-            word = "t_" + word
             if not wordcloud.get(word, False):
                wordcloud[word] = [0.0, 0.0]
             wordcloud[word][0] += 1.0
             wordcloud[word][1] = wordcloud[word][1] + (pctChange/len(words) - wordcloud[word][1])/wordcloud[word][0]
          wordsSet = set(words)
          for word in wordsSet:
-            word = "t_" + word
             if not wordcloudUnique.get(word, False):
                wordcloudUnique[word] = [0.0, 0.0]
             wordcloudUnique[word][0] += 1.0
             wordcloudUnique[word][1] = wordcloudUnique[word][1] + (pctChange/len(wordsSet) - wordcloudUnique[word][1])/wordcloudUnique[word][0]
          
          # Description
-         words = document.getBagOfWords("description")
+         words = document.getBagOfWords2("description")
          for word in words:
-            word = "d_" + word
             if not wordcloud.get(word, False):
                wordcloud[word] = [0.0, 0.0]
             wordcloud[word][0] += 1.0
             wordcloud[word][1] = wordcloud[word][1] + (pctChange/len(words) - wordcloud[word][1])/wordcloud[word][0]
          wordsSet = set(words)
          for word in wordsSet:
-            word = "d_" + word
             if not wordcloudUnique.get(word, False):
                wordcloudUnique[word] = [0.0, 0.0]
             wordcloudUnique[word][0] += 1.0
@@ -359,18 +383,15 @@ class Index:                     # Index for a collection
       if not self.inVocabulary(word):
          return False
       return self.vocabulary[word].isDocumentPresent(document)
-   def getWeightOf(self, word, field = "description"):
-      word = {"title": "t_" + word, "description": "d_" + word}[field]
+   def getWeightOf(self, word):
       if self.inVocabulary(word):
          return self.vocabulary[word].getWeight()
       return 0.0
-   def getUniqueWeightOf(self, word, field = "description"):
-      word = {"title": "t_" + word, "description": "d_" + word}[field]
+   def getUniqueWeightOf(self, word):
       if self.inVocabulary(word):
          return self.vocabulary[word].getUniqueWeight()
       return 0.0
-   def getTFIDFWeightOf(self, word, document, field = "description"):
-      word = {"title": "t_" + word, "description": "d_" + word}[field]
+   def getTFIDFWeightOf(self, word):
       if self.inVocabulary(word):
          return self.vocabulary[word].getTFIDF(document)
       return 0.0

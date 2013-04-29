@@ -17,6 +17,7 @@ class Document:         # Class which abstracts documents
       self.group              = False
       self.tfidfVector        = {}        # TFIDF vector for the document
       self.tfidfLength        = -1.0      # Length of the TFIDF vector
+      self.indexWithMarkers   = False
 
    def __hash__(self):
       return hash(self.key)
@@ -46,32 +47,40 @@ class Document:         # Class which abstracts documents
       return self.group
    def setGroup(self, group):
       self.group = group
-      
-   # Get words
+   def setIndexWithMarkers(self):
+      self.indexWithMarkers = True
+   def unsetIndexWithMarkers(self):
+      self.indexWithMarkers = False
+   
+   # Returns a list of words from selected field
    def getBagOfWords(self, field = "description"):
       return {
          "title": self.title,#re.split('[ ]+', self.title),
          "description": self.description,#re.split('[ ]+', self.description),
          "all": self.title + self.description,#re.split('[ ]+', self.title) + re.split('[ ]+', self.description)
       }[field]
+   # Returns a list of words from selected field marked by 't_' & 'd_'
    def getBagOfWords2(self, field = "description"):
-      bag = []
-      if field == "all":
-         title = self.getBagOfWords("title")
-         for word in title:
-            bag.append("t_" + word)
-         description = self.getBagOfWords("description")
-         for word in description:
-            bag.append("d_" + word)
-      elif field == "title":
-         title = self.getBagOfWords("title")
-         for word in title:
-            bag.append("t_" + word)
-      elif field == "description":
-         description = self.getBagOfWords("description")
-         for word in description:
-            bag.append("d_" + word)      
-      return bag
+      if self.indexWithMarkers:
+         bag = []
+         if field == "all":
+            title = self.getBagOfWords("title")
+            for word in title:
+               bag.append("t_" + word)
+            description = self.getBagOfWords("description")
+            for word in description:
+               bag.append("d_" + word)
+         elif field == "title":
+            title = self.getBagOfWords("title")
+            for word in title:
+               bag.append("t_" + word)
+         elif field == "description":
+            description = self.getBagOfWords("description")
+            for word in description:
+               bag.append("d_" + word)      
+         return bag
+      else:
+         return self.getBagOfWords("all")
    def getWordDictionary(self, string):
       words = re.split('[ ]+', string)
       dictionary = {}
@@ -88,7 +97,7 @@ class Document:         # Class which abstracts documents
    # Features
    def getFeatures(self):
       return self.getBagOfWords2("all")
-   
+      
    # Methods that operate on the document's TFIDF vector
    def getTFIDF(self, word):
       documentEntry = self.tfidfVector.get(word, 0)

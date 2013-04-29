@@ -1,32 +1,64 @@
 import time
-
+import sys
+import math
 
 class Timer:
    """Class to time function calls - Counts the CPU time used"""
    # Start the timer
-   def __init__(self, string):
+   def __init__(self, string, limit = 100, numBars = 100):
       self.string = string
-      self.start = time.clock()
+      self.beginning = time.clock()
       self.time  = 0.0
+      self.numBars = numBars
+      self.oneBar = 0
+      self.numBarsWritten = 0
+      self.limit = limit
+      self.progress = 0
+      if self.numBars:
+         self.oneBar = int(math.ceil(limit/numBars))
+         sys.stdout.write("[%s]" % (" " * numBars))
+         sys.stdout.flush()
+         sys.stdout.write("\b" * (numBars + 1))
    
-   def start(self, string):
-      self.string = string
-      self.start = time.clock()
-      self.time  = 0.0
+   def start(self, string, limit = 100, numBars = 100):
+      self.__init__(string, limit, numBars)
+      
    def stop(self):
       """"Print the CPU secs used"""
-      if self.start:
-         print "\033[92mTime taken for (%s) = %f\033[0m" % (self.string, time.clock() - self.start + self.time)
+      if self.progress <= self.limit:
+         sys.stdout.write('\x1b[2K')
+         sys.stdout.write("\b" * (self.numBarsWritten + 2))
+         self.progress = self.limit
+      if self.beginning:
+         print "\033[92mTime taken for (%s) = %f\033[0m" % (self.string, time.clock() - self.beginning + self.time)
       else:
          print "\033[92mTime taken for (%s) = %f\033[0m" % (self.string, self.time)
       self.string = None
-      self.start = None
+      self.beginning = None
       self.time = None
-      
+      self.limit = 0
+      self.progress = 0
+      self.numBars = 0
+      self.oneBar = 0
+   def tick(self):
+      if self.beginning and self.progress < self.limit:
+         self.progress += 1
+         if self.progress % self.oneBar == 0:
+            if self.numBarsWritten < self.numBars:
+               sys.stdout.write("-")
+               sys.stdout.flush()
+               self.numBarsWritten += 1
+            else:
+               self.progress = self.limit
+               self.numBarsWritten = self.numBars
+         #if self.progress == self.limit:
+         #   sys.stdout.write('\x1b[2K')
+         #   sys.stdout.write("\b" * (self.numBars + 2))
+   
    def pause(self):
-      if self.start:
-         self.time += time.clock() - self.start
-         self.start = None
+      if self.beginning:
+         self.time += time.clock() - self.beginning
+         self.beginning = None
    def unpause(self):
-      if not self.start:
-         self.start = time.clock()
+      if not self.beginning:
+         self.beginning = time.clock()

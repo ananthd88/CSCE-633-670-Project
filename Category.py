@@ -3,7 +3,7 @@ import math
 from scipy.sparse import csr_matrix, lil_matrix
 
 class Category:      # Class that abstracts a category of documents
-   def __init__(self, key, name):
+   def __init__(self, key, name, indexWithMarkers = False):
       self.key = key
       self.name = name
       self.documents = {}
@@ -12,7 +12,7 @@ class Category:      # Class that abstracts a category of documents
       self.groupBoundaries = []
       self.runningMean = 0.0
       self.runningVariance = 0.0
-      self.index = Index.Index(self)
+      self.index = Index.Index(self, indexWithMarkers)
       self.totalTokenCount = 0
    def __hash__(self):
       return hash(self.key)
@@ -91,7 +91,7 @@ class Category:      # Class that abstracts a category of documents
    def processDocuments(self):
       print "Processing documents - Creating the reverse index"
       for key in self.documents:
-         self.index.processDocument(self.documents[key])
+         self.index.processDocument2(self.documents[key])
       self.index.reverseIndexDone = True
       print "Total no. of words in vocabulary = %d" % (self.index.getSizeOfVocabulary())
       print "Total no. of title words in vocabulary = %d" % (self.index.numTitleWords)
@@ -142,16 +142,30 @@ class Category:      # Class that abstracts a category of documents
          document = self.documents[key]
          salaries.append(document.getSalary())
       salaries = sorted(salaries)
-      groupSize = self.getNumDocuments()/numGroups
       count = 0
       group = 0
       boundaries = []
-      for salary in salaries:
-         if count % groupSize == 0:
-            boundaries.append(salary)
-            count  = 0
-         count += 1
-      boundaries = boundaries[1:-1]
+      numDocuments = self.getNumDocuments()
+      if True:
+         #low = salaries[0]
+         #high = salaries[-1]
+         edge = int(numDocuments/1000)
+         low = salaries[0 + edge]
+         high = salaries[-1 - edge]
+         r = math.fabs(high - low)
+         groupSize = r / numGroups
+         for i in range(1, numGroups):
+            boundaries.append(low + float(i *groupSize))
+         boundaries = [low] + boundaries + [high]
+      else:   
+         groupSize = numDocuments/numGroups
+         for salary in salaries:
+            if count % groupSize == 0:
+               boundaries.append(salary)
+               count  = 0
+            count += 1
+         boundaries = boundaries[1:-1]
+      
       self.groupBoundaries = boundaries
       count = 0
       for boundary in boundaries:
@@ -201,10 +215,10 @@ class Category:      # Class that abstracts a category of documents
       return self.index.getSizeOfVocabulary()
    def getVocabulary(self):
       return self.index.getVocabulary()
-   def getWeightOf(self, word, field):
-      return self.index.getWeightOf(word, field)
-   def getUniqueWeightOf(self, word, field):
-      return self.index.getUniqueWeightOf(word, field)
+   def getWeightOf(self, word):
+      return self.index.getWeightOf(word)
+   def getUniqueWeightOf(self, word):
+      return self.index.getUniqueWeightOf(word)
    def getNumTokensInGroup(self, word, group):
       return self.index.getNumTokensInGroup(word, group)
    def getNumTokensInClass(self, word, groupKey):
@@ -219,8 +233,10 @@ class Category:      # Class that abstracts a category of documents
    def isImportantFeature(self, feature):
       return self.index.isImportantFeature(feature)
    def findImportantWords(self, fraction):
-      self.index.findImportantWords(fraction)
-      
+      return self.index.findImportantWords(fraction)
+   def getMI(self, word, group):
+      return self.index.getMI(word, group)
+   
 class Group(Category):
    def __init__(self, key):
       self.key = key

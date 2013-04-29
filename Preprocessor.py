@@ -5,6 +5,7 @@ import Spell_Corrector
 import sys
 import re
 import Timer
+import math
 
 def add2Vocabulary1(word):
    if not vocabulary1.get(word, False):
@@ -13,7 +14,7 @@ def add2Vocabulary1(word):
    
 def add2Vocabulary2(word):
    if not vocabulary2.get(word, False):
-      vocabulary2[word] = 0
+      vocabulary2[word] = vocabulary1[word] - 1
    vocabulary2[word] += 1
    
 def filterString(string):
@@ -34,7 +35,7 @@ def filterList(words):
    for word in words:
       if word in stopwords:
          continue
-      if word in vocabulary2:
+      elif word in vocabulary2:
          string.append(word)
       elif word in corrections:
          string.append(corrections[word])
@@ -52,9 +53,9 @@ def wordSplitter(word):
       word1    = word[:i]
       word2    = word[i:]
       if word1 not in stopwords:
-         if getCount1(word1) > 1:
+         if getCount1(word1) >= minCount:
             if word2 not in stopwords:
-               if getCount1(word2) > 1:
+               if getCount1(word2) >= minCount:
                   return [word1, word2]
                else:
                   continue
@@ -64,7 +65,7 @@ def wordSplitter(word):
             continue
       else:
          if word2 not in stopwords:
-            if getCount1(word2) > 1:
+            if getCount1(word2) >= minCount:
                return [False, word2]
             else:
                continue
@@ -72,48 +73,40 @@ def wordSplitter(word):
             return [False, False]
    return False
 
-stopwords = set(["", ".", "a", "an", "and", "are", "as", "at", "be", "for", "have", "if", "in", "is", "of", "on", "or", "our", "s", "the", "this", "to", "we", "will", "with", "work", "you", "your"])
+stopwords = set(["", ".", "a", "an", "and", "are", "as", "at", "be", "d", "e", "for", "have", "hi", "i", "if", "in", "is", "m", "of", "on", "or", "our", "p", "s", "t", "the", "this", "to", "we", "will", "with", "work", "you", "your"])
 collection = []
 vocabulary1 = {}
 vocabulary2 = {}
 corrections = {}
+minCount = 3
+toolbarWidth = 100
 
 def main():
    fin = open(sys.argv[1], 'rt')
-   fieldnames = ["Id", "Title", "FullDescription", "Company", "Category", "SalaryNormalized"]
+   fieldnames = ["Id", "Title", "FullDescription", "LocationNormalized", "LocationRaw", "Company", "Category", "SalaryNormalized"]
    reader = csv.DictReader(fin)
-   count  = 0
-   timer = Timer.Timer("Reading documents")
+   timer = Timer.Timer("Reading documents", 0, 0)
+   count = 0
    for row in reader:
-      count += 1
-      if count % 10000 == 0:
-         print "%dth document read" % (count)
-      #if not row["Category"].lower() == "part time jobs":
+      #if row["Category"].lower() != "it jobs":
       #   continue
-      bag = filterString(row["Title"].lower()) + filterString(row["FullDescription"].lower())
-      
+      bag = filterString(row["Title"].lower()) + filterString(row["FullDescription"].lower())      
       for word in bag:
-         #if word in stopwords:
-         #   continue
          add2Vocabulary1(word)
-      #collection.append(newrow)
+      count += 1
    fin.close()
    timer.stop()
+   numAds = count
    
-   print "Num words in vocab 1 = %d" % (len(vocabulary1))
-   print "Num words in vocab 2 = %d" % (len(vocabulary2))
-   print "Num words corrected  = %d" % (len(corrections))
-   
-   raw_input("Abt to do spell correction, press any key")
-   
-   timer = Timer.Timer("Spell correction")
+   numWords = len(vocabulary1)
+   timer.start("Spell correction", numWords)
    spellchecker = Spell_Corrector.SpellCorrector()
    spellchecker.setDictionary(vocabulary1)
-      
    for (word, count) in vocabulary1.items():
+      timer.tick()
       if word in stopwords:
          continue
-      if count == 1:
+      if count < minCount:
          result = wordSplitter(word)
          if result:
             word1, word2 = result
@@ -124,19 +117,23 @@ def main():
          else:
             correct_word = spellchecker.correct(word)            
             if word != correct_word:
-               add2Vocabulary2(correct_word)
-               print "%s -> %s" % (word, correct_word)
+               if correct_word not in stopwords:
+                  add2Vocabulary2(correct_word)
+               #print "%s -> %s" % (word, correct_word)
                corrections[word] = correct_word
+            else:
+               if count == minCount - 1:
+                  add2Vocabulary2(word)
       else:
          add2Vocabulary2(word)
-   print "Num words in vocab 1 = %d" % (len(vocabulary1))
-   print "Num words in vocab 2 = %d" % (len(vocabulary2))
-   print "Num words corrected  = %d" % (len(corrections))
    timer.stop()
    
-   raw_input("Abt to write, press any key")
+   #for key in sorted(vocabulary2, key = lambda word: vocabulary2[word], reverse=True):
+   #   print "%20s - %5d" % (key, vocabulary2[key])
+
    
-   timer = Timer.Timer("Writing back to file")
+   
+   timer.start("Writing back to file", 0, 0)
    fout = open(sys.argv[2], 'w')
    writer = csv.DictWriter(fout, fieldnames=fieldnames)
    headers = dict( (n,n) for n in fieldnames )
@@ -146,11 +143,11 @@ def main():
    fin = open(sys.argv[1], 'rt')
    reader = csv.DictReader(fin)
    for row in reader:
-      count += 1
-      if count % 10000 == 0:
-         print "%dth document read" % (count)
-      #if not row["Category"].lower() == "part time jobs":
+      #timer.tick()
+      #if row["Category"].lower() != "it jobs":
       #   continue
+      
+      count += 1
       newrow = {}
       newrow["Id"] = int(row["Id"])
       newrow["Title"] = filterList(filterString(row["Title"].lower()))
@@ -158,16 +155,19 @@ def main():
       newrow["Company"] = row["Company"].lower()
       newrow["Category"] = row["Category"].lower()
       newrow["SalaryNormalized"] = float(row["SalaryNormalized"])
-      writer.writerow(row)
+      newrow["LocationNormalized"] = row["LocationNormalized"]
+      newrow["LocationRaw"] = row["LocationRaw"]
+      
+      writer.writerow(newrow)
       
       if count % 10000 == 0:
-         print "%d ads read" % (count)
+         print "%d ads written" % (count)
       count += 1
+   timer.stop()
    print "Num words in vocab 1 = %d" % (len(vocabulary1))
    print "Num words in vocab 2 = %d" % (len(vocabulary2))
-   print "Num words corrected  = %d" % (len(corrections))
+   print "Num words corrected  = %d" % (len(corrections))   
    print "Done"
-   timer.stop()
    
    fout.close()
 if __name__ == '__main__':

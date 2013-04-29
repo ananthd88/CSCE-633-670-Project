@@ -22,14 +22,14 @@ class Collection:
       self.maPrecision = 0.0
       self.maRecall = 0.0
       
-   # Documents   
+   # Documents
    def getName(self):
       return self.name
    def getNumDocuments(self):
       return self.NumDocuments
-   def addDocument(self, dictionary):
+   def addDocument(self, dictionary, indexWithMarkers = False):
       categoryName = dictionary.get("Category", "").lower()
-      self.addCategory(categoryName)
+      self.addCategory(categoryName, indexWithMarkers)
       category = self.getCategory(False, categoryName)
       companyName = dictionary.get("Company", "").lower()
       if companyName == "":
@@ -39,8 +39,11 @@ class Collection:
       category.addCompany(company)
       document = {}
       document["Id"]              = int(dictionary.get("Id", "0"))
-      document["Title"]           = self.filterString(dictionary.get("Title", "").lower(), category)
-      document["FullDescription"] = self.filterString(dictionary.get("FullDescription", "").lower(), category)
+      # TODO: Remove commented code
+      #document["Title"]           = self.filterString(dictionary.get("Title", "").lower(), category)
+      #document["FullDescription"] = self.filterString(dictionary.get("FullDescription", "").lower(), category)
+      document["Title"]           = re.split('[ ]+', dictionary["Title"])
+      document["FullDescription"] = re.split('[ ]+', dictionary["FullDescription"])
       document["LocationRaw"]     = dictionary.get("LocationRaw", "").lower()
       document["Category"]        = category
       document["Company"]         = company
@@ -48,6 +51,8 @@ class Collection:
       document = Document.Document(document)
       category.addDocument(document)
       return document
+   # TODO: filterString() might not be needed, but there is code in the f()
+   # which try to extract the no. of years of experience from description
    def filterString(self, string, category):
       # Split only at whitespaces
       chunks = re.split('\s+', string)
@@ -96,11 +101,11 @@ class Collection:
       elif name:
          return name in self.categoryNameToKey
       return False
-   def addCategory(self, name):
+   def addCategory(self, name, indexWithMarkers = False):
       if self.hasCategory(False, name):      
          return False      
       key = len(self.categories) + 1 # Keys run from 1 to num of categories
-      category = Category.Category(key, name)
+      category = Category.Category(key, name, indexWithMarkers)
       self.categoryNameToKey[name] = key
       self.categories[key] = category
       return True
@@ -134,7 +139,7 @@ class Collection:
    def createGroups(self):
       for (key, category) in self.categories.items():
          # TODO: Change hard-coded value
-         category.createGroups(5)
+         category.createGroups(10)
    def assignGroups(self):
       for (key, category) in self.categories.items():
          category.assignGroups()
