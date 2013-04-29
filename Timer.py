@@ -45,7 +45,10 @@ class Timer:
          self.progress += 1
          if self.progress % self.oneBar == 0:
             if self.numBarsWritten < self.numBars:
-               sys.stdout.write("-")
+               if (self.numBarsWritten + 1) % 10 == 0:
+                  sys.stdout.write("|")
+               else:
+                  sys.stdout.write("-")
                sys.stdout.flush()
                self.numBarsWritten += 1
             else:

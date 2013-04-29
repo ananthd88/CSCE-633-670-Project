@@ -44,7 +44,7 @@ class Collection:
       #document["FullDescription"] = self.filterString(dictionary.get("FullDescription", "").lower(), category)
       document["Title"]           = re.split('[ ]+', dictionary["Title"])
       document["FullDescription"] = re.split('[ ]+', dictionary["FullDescription"])
-      document["LocationRaw"]     = dictionary.get("LocationRaw", "").lower()
+      document["LocationRaw"]     = re.split('[^a-zA-Z]+', dictionary.get("LocationRaw", "").lower())
       document["Category"]        = category
       document["Company"]         = company
       document["SalaryNormalized"]= float(dictionary.get("SalaryNormalized", 0.0))
@@ -139,7 +139,7 @@ class Collection:
    def createGroups(self):
       for (key, category) in self.categories.items():
          # TODO: Change hard-coded value
-         category.createGroups(10)
+         category.createGroups(10)         
    def assignGroups(self):
       for (key, category) in self.categories.items():
          category.assignGroups()

@@ -180,6 +180,13 @@ class Index:                     # Index for a collection
          if not termEntry.hasGroupEntry(group):
             termEntry.addGroup(group)
          termEntry.incrementGroupEntryCount(group)
+         groupEntry = termEntry.getGroupEntry(group)
+         groupEntry.addDocument(document)
+         G = group.getNumDocuments()
+         TG = groupEntry.getNumDocuments()
+         if G < TG:
+            raw_input("G < TG for %s, %d" % (word, group.getKey()))
+         
          termEntry.getGroupEntry(group).addDocument(document)
          group.incrementTotalTokenCount()
    def findImportantWords2(self, fraction):
@@ -425,23 +432,22 @@ class Index:                     # Index for a collection
    def computeMI(self, word, group):
       N  = float(self.getNumDocuments())
       T  = float(self.vocabulary[word].getNumDocuments())
-      C  = float(group.getNumDocuments())
+      G  = float(group.getNumDocuments())
       groupEntry = self.vocabulary[word].getGroupEntry(group)
       if groupEntry:
-         TC = groupEntry.getNumDocuments()
+         TG = float(groupEntry.getNumDocuments())
       else:
-         TC = 0.0
-      
+         TG = 0.0
       NXX = N + 1.0
-      N00 = N - T - C + TC + 1.0
-      N01 = C - TC + 1.0
-      N10 = T - TC + 1.0
-      N11 = TC + 1.0
-      NX0 = N - C + 1.0
-      NX1 = C + 1.0
+      N00 = N - T - G + TG + 1.0
+      N01 = G - TG + 1.0
+      N10 = T - TG + 1.0
+      N11 = TG + 1.0
+      NX0 = N - G + 1.0
+      NX1 = G + 1.0
       N0X = N - T + 1.0
       N1X = T + 1.0
-      
+      #print word + "-" + str(group.getKey()) + "|" + str(G) + "|" + str(TG) + "|" + str(NXX) + "-" + str(N00) + "-" + str(N01) + "-" + str(N10) + "-" + str(N11) + "-" + str(NX0) + "-" + str(NX1) + "-" + str(N0X) + "-" + str(N1X)
       mi  = (N11/NXX)*math.log((NXX*N11)/(N1X*NX1)) 
       mi += (N01/NXX)*math.log((NXX*N01)/(N0X*NX1)) 
       mi += (N10/NXX)*math.log((NXX*N10)/(N1X*NX0)) 

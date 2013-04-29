@@ -135,7 +135,7 @@ class Category:      # Class that abstracts a category of documents
    def assignGroup(self, document):
       groupKey = self.determineGroup(document)
       document.setGroup(self.groups[groupKey])
-      self.groups[groupKey].addDocument(document)      
+      self.groups[groupKey].addDocument(document)
    def createGroups(self, numGroups):
       salaries = []
       for key in self.documents:
@@ -169,9 +169,14 @@ class Category:      # Class that abstracts a category of documents
       self.groupBoundaries = boundaries
       count = 0
       for boundary in boundaries:
-         self.groups.append(Group(count))
+         newGroup = Group(count)
+         self.groups.append(newGroup)
+         newGroup.index = self.index
          count += 1
-      self.groups.append(Group(count))
+      newGroup = Group(count)
+      self.groups.append(newGroup)
+      newGroup.index = self.index
+      
    def getClasses(self):
       return range(self.getNumGroups())
    def getNumDocumentsInClass(self, groupKey):

@@ -4,13 +4,12 @@ import Collection
 import Document
 import Timer
 import Classifier
+import Regressor
 import csv
 import sys
 import math
 import re
 from sklearn import svm
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.ensemble import RandomForestRegressor
 import gc
 
 # Just a comment
@@ -30,7 +29,7 @@ def main():
          #if count % 10000 == 0:
          #   print "%d-th document" % (count)         
          cat = row["Category"].lower()
-         if cat != "legal jobs":
+         if cat != "it jobs":
             continue         
          # TODO: Remove restriction (read only every 100th document)
          if count % 4 == 0:
@@ -87,115 +86,63 @@ def main():
    categoryTest = testSet.getCategory(1, False)
       
    
-   meanError = 0.0
    meanErrorGroup = 0.0
    count = 0.0
-   countCorrect = 0
-   #XY = categoryTrain.getXY(None)
-   #X = XY["X"]
-   #Y = XY["Y"]
-   classifyingAlgo = "NB"
-   if classifyingAlgo == "SVM":
+   countCorrect = 0.0
+   classification = "NB"
+   regression = "RF"
+   if classification == "SVM":
       timer.start("SVM Learning", 0, 0)
-      lin_clf = svm.LinearSVC(C = 5.0, dual = True, verbose = 2)
-      vectorizer = CountVectorizer(vocabulary = categoryTrain.getVocabulary().keys(), min_df = 1)
-      strings = []
-      Y = []
-      for docKey in categoryTrain.getDocuments():
-         document = categoryTrain.getDocument(docKey)
-         strings.append(" ".join(document.getBagOfWords2("all")))
-         Y.append(document.getGroup().getKey())
-      X = vectorizer.fit_transform(strings)
-      lin_clf.fit(X, Y)
+      classifier = Classifer.SVM(categoryTrain)
+      # TODO: Add option to send numfeatures
+      classifier.train()
       timer.stop()
-      timer.start("SVM Classification", 0, 0)
-      for docKey in categoryTest.getDocuments():
-         document = categoryTest.getDocument(docKey)
-         strings.append(" ".join(document.getBagOfWords2("all")))
-      Z = vectorizer.fit_transform(strings)
-      array = lin_clf.predict(Z)
-   elif classifyingAlgo == "NB":
+      timer1 = Timer.Timer("SVM Classification", numD)
+   elif classification == "NB":
       timer.start("NB Learning", 0, 0)
-      nb = Classifier.NaiveBayesClassifier(categoryTrain)
+      classifier = Classifier.NaiveBayesClassifier(categoryTrain)
       timer.stop()
-      timer.start("NB Classification", numD)
+      #timer.start("NB Classification", 0, 0)
+      timer1 = Timer.Timer("NB Classification", numD)      
    
    count0 = 0
    countneg = 0
    countpos = 0
    meanneg = 0.0
    meanpos = 0.0
-   
-   milimits = {}
-   predictors = {}
-   importantWords = {}
-   vectorizers = {}
+   meanSalaryError = 0.0
+   regressors = {}
+   timer1.pause()
+   timer2 = Timer.Timer("Regression training & prediction", 0, 0)
+   timer2.pause()
    for docKey in categoryTest.getDocuments():
-      timer.tick()
-      count += 1.0
+      timer1.unpause()
+      timer1.tick()
       document = categoryTest.getDocument(docKey)
-      if classifyingAlgo == "SVM":
-         classification = array[count0]
-      elif classifyingAlgo == "NB":
-         classification = nb.predict(document)
+      #print "document %d" % (count)
+      count += 1.0
+      # Classification
+      classification = classifier.classify(document)
       predictedGroup = categoryTrain.getGroup(classification)
+      actualGroup = categoryTrain.getGroup(categoryTrain.determineGroup(document))
+      meanErrorGroup += (abs(classification - actualGroup.getKey()) - meanErrorGroup)/count
+      timer1.pause()
       
-      # Select the top 1000 important words for this group
-      if not milimits.get(classification, False):
-         countmi = 0
-         words = []
-         for key in sorted(categoryTrain.getVocabulary(), key = lambda word: categoryTrain.getMI(word, predictedGroup), reverse=True):
-            words.append(key)
-            countmi += 1
-            if countmi == 3000:
-               milimits[classification] = categoryTrain.getMI(key, predictedGroup)
-               importantWords[classification] = words
-               break
-         # Predictors
-         randForest = RandomForestRegressor()
-         vectorizer = CountVectorizer(vocabulary = importantWords[classification], min_df = 1)
-         strings = []
-         Y = []
-         for docKey in predictedGroup.getDocuments():
-            doc = categoryTrain.getDocument(docKey)
-            strings.append(" ".join(doc.getBagOfWords2("all")))
-            Y.append(doc.getSalary())
-         X = vectorizer.fit_transform(strings).toarray()
-         randForest.fit(X, Y)
-         predictors[classification] = randForest
-         vectorizers[classification] = vectorizer
+      # Regression training
+      timer2.unpause()
+      if not regressors.get(classification, False):
+         if regression == "UW":
+            regressors[classification] = Regressor.UniqueWeightsRegressor(categoryTrain)
+            regressors[classification].train(1000)
+         elif regression == "RF":
+            regressors[classification] = Regressor.RandomForestRegressor(categoryTrain)
+            #print "Regressor training for group %d" % (predictedGroup.getKey())
+            regressors[classification].train(1000)
+            
+      predictedSalary = regressors[classification].predict(document)
       
-      
-      
-      count0 += 1
-      strings = []
-      strings.append(" ".join(document.getBagOfWords2("all")))
-      Z = vectorizers[classification].fit_transform(strings).toarray()
-      result = predictors[classification].predict(Z)
-      
-      actualGroup = categoryTrain.determineGroup(document)
-      meanErrorGroup = meanErrorGroup + (abs(classification - actualGroup) - meanErrorGroup)/count
-      predictedSalary = result[0]
-      #predictedSalary = categoryTrain.getGroup(classification).getMean()
-      #stdDeviation = categoryTrain.getGroup(classification).getStdDeviation()
-      #predictionMI = 0.0
-      #predictionWeight = 0.0
-      #redictionUniqueWeight = 0.0
-      
-      #for word in set(document.getBagOfWords2("all")):
-      #   mi = categoryTrain.getMI(word, predictedGroup)
-      #   if mi < milimits[classification]:
-      #      continue
-      #   predictionWeight += categoryTrain.getUniqueWeightOf(word) * 5
-      #   predictionMI += mi
-      #for word in document.getBagOfWords2("all"):
-      #   predictionWeight += categoryTrain.getWeightOf(word)
-      #   predictionMI += categoryTrain.getMI(word, predictedGroup)
-      #prediction = predictionWeight #- float(int(predictionWeight/math.fabs(predictionWeight))) * predictionMI # * predictionMI# * 10.0
-      #predictedSalary *= (1 + prediction/100.0)
-      #predictedSalary += (prediction/100.0) * stdDeviation
       actualSalary = document.getSalary()
-      meanError += (math.fabs(predictedSalary - actualSalary) - meanError) / count
+      meanSalaryError += (math.fabs(predictedSalary - actualSalary) - meanSalaryError) / count
       if predictedSalary > actualSalary:
          countpos += 1
          meanpos += (math.fabs(predictedSalary - actualSalary) - meanpos) / countpos
@@ -204,22 +151,16 @@ def main():
          meanneg += (math.fabs(predictedSalary - actualSalary) - meanneg) / countneg
       if math.fabs(predictedSalary - actualSalary) < 3000.0:
          countCorrect += 1
-      #truth = document.getGroup().getKey()
-      #print "%d (%d, %d)" % (document.getKey(), document.getGroup().getKey(), prediction)
-      #predictions.append(prediction)
-      #truths.append(truth)
-   #metrics = nb.getMetrics(predictions, truths)
-   #print "Precision  = %f" % (metrics["precision"])
-   #print "Recall     = %f" % (metrics["recall"])
-   #print "MAF1       = %f" % (metrics["maf1"])
-   #print "RSS        = %d" % (metrics["rss"])
-   #print "Avg error  = %f" % (metrics["meanerr"])
-   print "Avg error in salary prediction = %f" % (meanError)
+      timer2.pause()
+   timer1.stop()
+   timer2.stop()
+   print "Avg error in salary prediction = %f" % (meanSalaryError)
    print "(Num, Avg) Positive errors = (%d, %f)" % (countpos, meanpos)
    print "(Num, Avg) Negative errors = (%d, %f)" % (countneg, meanneg)
    print "Avg error in group prediction = %f" % (meanErrorGroup)
    print "Count of < 3000.0 error = %d" % (countCorrect)
-   timer.stop()
+   
+   timer0.stop()
    exit()
    #timer = Timer.Timer("Computing X, Y")
    #dictionary = category.getXY(importantWords)
@@ -258,6 +199,6 @@ def main():
             print "Document not found in training set"
       else:
          do = False
-   timer0.stop()
+   
 if __name__ == '__main__':
     main()

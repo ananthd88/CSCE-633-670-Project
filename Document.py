@@ -55,9 +55,11 @@ class Document:         # Class which abstracts documents
    # Returns a list of words from selected field
    def getBagOfWords(self, field = "description"):
       return {
-         "title": self.title,#re.split('[ ]+', self.title),
-         "description": self.description,#re.split('[ ]+', self.description),
-         "all": self.title + self.description,#re.split('[ ]+', self.title) + re.split('[ ]+', self.description)
+         "title": self.title,
+         "description": self.description,
+         "location": self.location,
+         "company": re.split('\s+', self.company.getName()),
+         "all": self.title + self.description + self.location + re.split('\s+', self.company.getName()),
       }[field]
    # Returns a list of words from selected field marked by 't_' & 'd_'
    def getBagOfWords2(self, field = "description"):
