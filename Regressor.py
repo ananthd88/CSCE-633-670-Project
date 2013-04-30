@@ -2,6 +2,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.ensemble import RandomForestRegressor as RFR
 from sklearn.neighbors import KNeighborsRegressor as KNR
+from sklearn.svm import SVR
 import itertools
 import math
 
@@ -118,4 +119,32 @@ class KNeighborsRegressor(Regressor):
       strings = []
       strings.append(" ".join(document.getBagOfWords2("all")))
       Z = self.vectorizer.transform(strings).todense()
+      return self.regressor.predict(Z)
+
+class SVMRegressor(Regressor):
+   def findImportantFeatures(self, numFeatures = 1000):
+      #Selecting the important features
+      self.features = []
+      count = 0
+      for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getUniqueWeightOf(word), reverse=True):
+         count += 1
+         self.features.append(key)
+         if count == numFeatures:
+            break
+   def train(self, numFeatures = 1000):
+      self.findImportantFeatures(numFeatures)
+      self.vectorizer = CountVectorizer(vocabulary = self.features,min_df = 1)
+      self.regressor = SVR(kernel='linear', C=25, epsilon=10)
+      strings = []
+      Y = []
+      for docKey in self.trainSet.getDocuments():
+         document = self.trainSet.getDocument(docKey)
+         strings.append(" ".join(document.getBagOfWords2("all")))
+         Y.append(document.getSalary())
+      X = self.vectorizer.fit_transform(strings)
+      self.regressor.fit(X,Y)
+   def predict(self, document):
+      strings = []
+      strings.append(" ".join(document.getBagOfWords2("all")))
+      Z = self.vectorizer.fit_transform(strings)
       return self.regressor.predict(Z)
