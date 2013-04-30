@@ -110,6 +110,8 @@ class NaiveBayesClassifier(Classifier):
       maxLogProbability = None
       predictedClass = False
       for classKey in self.trainingSet.getClasses():
+         if self.trainingSet.getNumDocumentsInClass(classKey) == 0:
+            continue
          logProbability  = 0.0
          # P(c) = (No. of docs in c)/(No. of training docs)
          logProbability += math.log(float(self.trainingSet.getNumDocumentsInClass(classKey) + 1), 2)
