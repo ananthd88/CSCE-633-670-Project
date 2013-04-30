@@ -10,9 +10,10 @@ import gc
 
 class PayMaster:
    def __init__(self, filename, categoryName):
-      self.refresh(filename, categoryName)
+      self.filename = filename
+      self.refresh(categoryName)
       
-   def refresh(self, filename, categoryName):
+   def refresh(self, categoryName):
       self.trainSet = Collection.Collection("Training")
       self.testSet = Collection.Collection("Testing")
       self.categoryName = categoryName
@@ -20,6 +21,7 @@ class PayMaster:
       self.documents = []
       self.resetRegressionSettings()
       self.resetStats()
+      inputfile = open(self.filename, 'rt')
       try:
          reader = csv.DictReader(inputfile)
          count = 0
