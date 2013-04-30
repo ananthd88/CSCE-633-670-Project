@@ -1,4 +1,5 @@
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn import svm
 import itertools
 import math
 
@@ -150,20 +151,20 @@ class SVM(Classifier):
    def findImportantFeatures(self, numFeatures = 500):
       self.features = []
       count = 0
-      for key in sorted(trainSet.getVocabulary(), key = lambda word: trainSet.getUniqueWeight(word), reverse=True):
+      for key in sorted(self.trainingSet.getVocabulary(), key = lambda word: self.trainingSet.getUniqueWeightOf(word), reverse=True):
          self.features.append(key)
          count += 1
-         if countmi == numFeatures:
+         if count == numFeatures:
             break
 
    def train(self, numFeatures = 500):
       self.findImportantFeatures(numFeatures)
-      self.classifier = svm.LinearSVC(C = 5.0, dual = True, verbose = 2)
+      self.classifier = svm.LinearSVC(C = 5.0, dual = True, verbose = 0)
       self.vectorizer = CountVectorizer(vocabulary = self.features, min_df = 1)
       strings = []
       Y = []
-      for docKey in trainingSet.getDocuments():
-         document = trainingSet.getDocument(docKey)
+      for docKey in self.trainingSet.getDocuments():
+         document = self.trainingSet.getDocument(docKey)
          strings.append(" ".join(document.getBagOfWords2("all")))
          Y.append(document.getGroup().getKey())
       X = self.vectorizer.fit_transform(strings)
@@ -172,10 +173,10 @@ class SVM(Classifier):
       strings = []
       strings.append(" ".join(document.getBagOfWords2("all")))
       Z = self.vectorizer.fit_transform(strings)
-      return self.classifer.predict(Z)[0]
+      return self.classifier.predict(Z)[0]
    def classifyAll(self, testSet):
-      for docKey in categoryTest.getDocuments():
-         document = categoryTest.getDocument(docKey)
+      for docKey in self.testSet.getDocuments():
+         document = self.testSet.getDocument(docKey)
          strings.append(" ".join(document.getBagOfWords2("all")))
       Z = self.vectorizer.fit_transform(strings)
-      return self.classifer.predict(Z)
+      return self.classifier.predict(Z)

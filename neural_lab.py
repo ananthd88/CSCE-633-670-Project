@@ -31,7 +31,6 @@ class NeuralNetwork:
 		count = 0
 		sel_words_set = set(sel_words)
 		sel_words_list = list(sel_words_set)
-		print "Start input calculation"
 		for document in collection:
 			count += 1
 			title = document.getTitle()
@@ -47,7 +46,6 @@ class NeuralNetwork:
 			list_of_salary.append(salary)
 		
 			if not (count%15000):
-				print count
 				break
 			
 			
@@ -62,10 +60,6 @@ class NeuralNetwork:
 		self.target = output.reshape(len(list_of_strings),1)
 		joblib.dump(self.target,'dataset_out.joblib')
 		
-		print self.inp
-		raw_input("Press a key")
-		print self.target
-		raw_input("Press another key")
 		return([self.inp,self.target])
 
 
@@ -75,7 +69,6 @@ class NeuralNetwork:
 		count = 0
 		sel_words_set = set(sel_words)
 		sel_words_list = list(sel_words_set)
-		print "Start input calculation"
 		for document in collection:
 			count += 1
 			title = document.getTitle()
@@ -91,7 +84,6 @@ class NeuralNetwork:
 			list_of_salary.append(salary)
 		
 			if not (count%15000):
-				print count
 				break
 			
 			
@@ -106,10 +98,6 @@ class NeuralNetwork:
 		self.target = output.reshape(len(list_of_strings),1)
 		joblib.dump(self.target,'test_dataset_out.joblib')
 		
-		print self.inp
-		raw_input("Press a key")
-		print self.target
-		raw_input("Press another key")
 		return([self.inp,self.target])
 
 
