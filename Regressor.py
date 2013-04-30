@@ -4,12 +4,13 @@ import itertools
 import math
 
 class Regressor:
-   def __init__(self, trainSet):
-      self.trainSet  = trainSet
+   def __init__(self, trainSet, isGroup = True):
+      self.trainSet     = trainSet
       self.features     = {}
       self.minMI        = 0.0
       self.vectorizer   = None
       self.regressor    = None
+      self.isGroup      = isGroup
 
    def train(self, numFeatures = 0):
       return
@@ -19,22 +20,27 @@ class Regressor:
 class UniqueWeightsRegressor(Regressor):
    def train(self, numFeatures = 500):
       count = 0
-      for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getMI(word, self.trainSet), reverse=True):
-         count += 1
-         if countmi == numFeatures:
-            self.minMI = self.trainSet.getMI(key, self.trainSet)
-            break
-      
+      if self.isGroup:
+         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getMI(word, self.trainSet), reverse=True):
+            count += 1
+            if countmi == numFeatures:
+               self.minMI = self.trainSet.getMI(key, self.trainSet)
+               break
+      else:
+         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getUniqueWeight(word), reverse=True):
+            count += 1
+            if countmi == numFeatures:
+               self.minMI = self.trainSet.getUniqueWeight(key)
+               break
+         
    def predict(self, document):
       predictedSalary   = self.trainSet.getMean()
       stdDeviation      = self.trainSet.getStdDeviation()
       prediction        = 0.0
       
       for word in set(document.getBagOfWords2("all")):
-         if self.minMI:
-            mi = self.trainSet.getMI(word, self.trainSet)
-            if mi < self.minMI:
-               continue
+         if self.minMI and self.trainSet.getMI(word, self.trainSet) < self.minMI:
+            continue
          prediction += self.group.getUniqueWeightOf(word) * 5
       predictedSalary += (prediction/100.0) * stdDeviation
       return predictedSalary
@@ -43,13 +49,21 @@ class RandomForestRegressor(Regressor):
    def findImportantFeatures(self, numFeatures = 500):
       self.features = []
       count = 0
-      for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getMI(word, self.trainSet), reverse=True):
-         self.features.append(key)
-         count += 1
-         if count == numFeatures:
-            self.minMI = self.trainSet.getMI(key, self.trainSet)
-            break
-      
+      if self.isGroup:
+         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getMI(word, self.trainSet), reverse=True):
+            self.features.append(key)
+            count += 1
+            if count == numFeatures:
+               self.minMI = self.trainSet.getMI(key, self.trainSet)
+               break
+      else:
+         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getUniqueWeight(word), reverse=True):
+            self.features.append(key)
+            count += 1
+            if count == numFeatures:
+               self.minMI = self.trainSet.getUniqueWeight(key)
+               break
+         
    def train(self, numFeatures = 500):
       # Should call findImportantFeatures() before a call to this function
       self.findImportantFeatures(numFeatures)

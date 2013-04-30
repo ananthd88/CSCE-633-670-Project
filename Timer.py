@@ -43,7 +43,7 @@ class Timer:
    def tick(self):
       if self.beginning and self.progress < self.limit:
          self.progress += 1
-         if self.progress % self.oneBar == 0:
+         if self.oneBar and self.progress % self.oneBar == 0:
             if self.numBarsWritten < self.numBars:
                if (self.numBarsWritten + 1) % 10 == 0:
                   sys.stdout.write("|")

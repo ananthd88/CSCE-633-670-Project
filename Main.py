@@ -13,10 +13,35 @@ from sklearn import svm
 import gc
 
 # Just a comment
-      
 def main():
-   timer0 = Timer.Timer("Entire program", 0, 0)
+   timer = Timer.Timer("Entire Program", 0, 0)
+   if len(sys.argv) >= 3:
+      print "Processing %s" % (sys.argv[2])
+      process(sys.argv[2].lower(), False, "NB", "RF", 1000, 1000)
+      timer.stop()
+      return
+   
    gc.enable()
+   inputfile = open(sys.argv[1], 'rt')
+   cats = {}
+   try:
+      reader = csv.DictReader(inputfile)
+      for row in reader:
+         cat = row["Category"].lower()
+         if not cats.get(cat, False):
+            cats[cat] = 0
+         cats[cat] += 1
+   finally:
+      inputfile.close()
+   meanErrors = {}
+   for cat in cats:
+      meanErrors[cat] = process(cat)
+   for cat in cats:
+      print "%s : %d : %f" % (cat, cats[cat], meanErrors[cat])
+   timer.stop()
+def process(categoryToProcess, regressionOnly = False, classification = "NB", regression = "RF", numFeaturesC = 1000, numFeaturesR = 1000):
+   #categoryToProcess = "it jobs"
+   timer0 = Timer.Timer("Processing " + categoryToProcess, 0, 0)
    inputfile = open(sys.argv[1], 'rt')
    trainSet = Collection.Collection("Training")
    testSet = Collection.Collection("Testing")
@@ -26,12 +51,9 @@ def main():
       count = 0
       for row in reader:
          count += 1
-         #if count % 10000 == 0:
-         #   print "%d-th document" % (count)         
          cat = row["Category"].lower()
-         if cat != "it jobs":
-            continue         
-         # TODO: Remove restriction (read only every 100th document)
+         if cat != categoryToProcess:
+            continue
          if count % 4 == 0:
             document = testSet.addDocument(row)
          else:
@@ -89,22 +111,23 @@ def main():
    meanErrorGroup = 0.0
    count = 0.0
    countCorrect = 0.0
-   classification = "NB"
-   regression = "RF"
-   if classification == "SVM":
-      timer.start("SVM Learning", 0, 0)
-      classifier = Classifer.SVM(categoryTrain)
-      # TODO: Add option to send numfeatures
-      classifier.train()
-      timer.stop()
-      timer1 = Timer.Timer("SVM Classification", numD)
-   elif classification == "NB":
-      timer.start("NB Learning", 0, 0)
-      classifier = Classifier.NaiveBayesClassifier(categoryTrain)
-      timer.stop()
-      #timer.start("NB Classification", 0, 0)
-      timer1 = Timer.Timer("NB Classification", numD)      
    
+   if not regressionOnly:
+      if classification == "SVM":
+         timer1 = Timer.Timer("SVM Training", 0, 0)
+         classifier = Classifer.SVM(categoryTrain)
+         # TODO: Add option to send numfeatures
+         classifier.train()
+         timer1.stop()
+         timer1 = Timer.Timer("SVM Classification", 0, 0)
+         timer1.pause()
+      elif classification == "NB":
+         timer1 = Timer.Timer("NB Training", 0, 0)
+         classifier = Classifier.NaiveBayesClassifier(categoryTrain)
+         timer1.stop()
+         timer1 = Timer.Timer("NB Classification", 0, 0)
+         timer1.pause()
+      
    count0 = 0
    countneg = 0
    countpos = 0
@@ -112,35 +135,51 @@ def main():
    meanpos = 0.0
    meanSalaryError = 0.0
    regressors = {}
-   timer1.pause()
-   timer2 = Timer.Timer("Regression training & prediction", 0, 0)
+   
+   timer2 = Timer.Timer("Regression training", 0, 0)
+   if regressionOnly:
+      if regression == "UW":
+         regressor = Regressor.UniqueWeightsRegressor(categoryTrain, False)
+      elif regression == "RF":
+         regressor = Regressor.RandomForestRegressor(categoryTrain, False)
+      regressor.train(numFeaturesR)
    timer2.pause()
+   
+   timer3 = Timer.Timer("Regression prediction", numD)
+   timer3.pause()
+   
    for docKey in categoryTest.getDocuments():
-      timer1.unpause()
-      timer1.tick()
-      document = categoryTest.getDocument(docKey)
-      #print "document %d" % (count)
       count += 1.0
-      # Classification
-      classification = classifier.classify(document)
-      predictedGroup = categoryTrain.getGroup(classification)
-      actualGroup = categoryTrain.getGroup(categoryTrain.determineGroup(document))
-      meanErrorGroup += (abs(classification - actualGroup.getKey()) - meanErrorGroup)/count
-      timer1.pause()
-      
+      document = categoryTest.getDocument(docKey)
+      if not regressionOnly:
+         # Classification
+         timer1.unpause()
+         classification = classifier.classify(document)
+         predictedGroup = categoryTrain.getGroup(classification)
+         actualGroup = categoryTrain.getGroup(categoryTrain.determineGroup(document))
+         meanErrorGroup += (abs(classification - actualGroup.getKey()) - meanErrorGroup)/count
+         timer1.pause()
+         
       # Regression training
-      timer2.unpause()
-      if not regressors.get(classification, False):
-         if regression == "UW":
-            regressors[classification] = Regressor.UniqueWeightsRegressor(categoryTrain)
-            regressors[classification].train(1000)
-         elif regression == "RF":
-            regressors[classification] = Regressor.RandomForestRegressor(categoryTrain)
-            #print "Regressor training for group %d" % (predictedGroup.getKey())
-            regressors[classification].train(1000)
-            
-      predictedSalary = regressors[classification].predict(document)
+      if not regressionOnly:
+         timer2.unpause()
+         if not regressors.get(classification, False):
+            if regression == "UW":
+               #regressors[classification] = Regressor.UniqueWeightsRegressor(categoryTrain, False)
+               regressors[classification] = Regressor.UniqueWeightsRegressor(categoryTrain.getGroup(classification))
+               regressors[classification].train(numFeaturesR)
+            elif regression == "RF":
+               #regressors[classification] = Regressor.RandomForestRegressor(categoryTrain, False)
+               regressors[classification] = Regressor.RandomForestRegressor(categoryTrain.getGroup(classification))
+               #print "Regressor training for group %d" % (predictedGroup.getKey())
+               regressors[classification].train(numFeaturesR)
+         regressor = regressors[classification]
+         timer2.pause()
       
+      # Regression prediction
+      timer3.unpause()
+      timer3.tick()
+      predictedSalary = regressor.predict(document)
       actualSalary = document.getSalary()
       meanSalaryError += (math.fabs(predictedSalary - actualSalary) - meanSalaryError) / count
       if predictedSalary > actualSalary:
@@ -151,7 +190,8 @@ def main():
          meanneg += (math.fabs(predictedSalary - actualSalary) - meanneg) / countneg
       if math.fabs(predictedSalary - actualSalary) < 3000.0:
          countCorrect += 1
-      timer2.pause()
+      timer3.pause()
+   timer3.stop()
    timer1.stop()
    timer2.stop()
    print "Avg error in salary prediction = %f" % (meanSalaryError)
@@ -161,6 +201,7 @@ def main():
    print "Count of < 3000.0 error = %d" % (countCorrect)
    
    timer0.stop()
+   return meanSalaryError
    exit()
    #timer = Timer.Timer("Computing X, Y")
    #dictionary = category.getXY(importantWords)
