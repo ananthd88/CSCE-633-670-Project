@@ -96,6 +96,7 @@ class PayMaster:
       except:
          self.regressor = Regressor.UniqueWeightsRegressor(self.categoryTrain, False)
          self.regressor.train(numFeaturesR)
+      self.trained = True
       return True
    def trainCR(self, classification, regression, numFeaturesC, numFeaturesR):
       self.classifier = {
@@ -117,6 +118,8 @@ class PayMaster:
             except:
                self.regressors[key] = Regressor.UniqueWeightsRegressor(group)
                self.regressors[key].train(numFeaturesR)
+      self.trained = True
+      return True
    def getNextDocument(self):
       if self.nextDocument < 0 or self.nextDocument >= len(self.documents):
          return False
@@ -128,9 +131,11 @@ class PayMaster:
          classification = self.classifier.classify(document)
          self.regressor = self.regressors[classification]
       predictedSalary = self.regressor.predict(document)
+      print "Hello", str(predictedSalary), " ",
       actualSalary = document.getSalary()
       self.predictedCount += 1
       self.runningMean += (math.fabs(predictedSalary - actualSalary) - self.runningMean) / self.predictedCount
+      print str(self.runningMean)
       if predictedSalary > actualSalary:
          self.posCount += 1
          self.posMean += (math.fabs(predictedSalary - actualSalary) - self.posMean) / self.posCount
@@ -139,6 +144,7 @@ class PayMaster:
          self.negMean += (math.fabs(predictedSalary - actualSalary) - self.negMean) / self.negCount
       if math.fabs(predictedSalary - actualSalary) < 3000.0:
          self.count3000 += 1
+      return predictedSalary
    def getMean(self):
       return self.runningMean
    def getVariance(self):
@@ -158,10 +164,10 @@ class PayMaster:
    def getStdDeviationSalary(self):
       return self.categoryTrain.getStdDeviation()
       
-   def predictNextDocument():
+   def predictNextDocument(self):
       if self.nextDocument < 0 or self.nextDocument >= len(self.documents):
          return -1.0
-      predictedSalary = self.predict(self.documents[self.nextDocument])
+      predictedSalary = self.predict(self.categoryTrain.getDocument(self.documents[self.nextDocument]))
       self.nextDocument += 1
       return predictedSalary
    def predictAll(self):
