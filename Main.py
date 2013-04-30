@@ -17,7 +17,7 @@ def main():
    timer = Timer.Timer("Entire Program", 0, 0)
    if len(sys.argv) >= 3:
       print "Processing %s" % (sys.argv[2])
-      process(sys.argv[2].lower(), False, "NB", "RF", 1000, 1000)
+      process(sys.argv[2].lower(), False, "NB", "KNR", 1000, 1000)
       timer.stop()
       return
    
@@ -149,6 +149,8 @@ def process(categoryToProcess, regressionOnly = False, classification = "NB", re
          regressor = Regressor.UniqueWeightsRegressor(categoryTrain, False)
       elif regression == "RF":
          regressor = Regressor.RandomForestRegressor(categoryTrain, False)
+      elif regression == "KNR":
+         regressor = Regressor.KNeighborsRegressor(categoryTrain, False) 
       regressor.train(numFeaturesR)
    timer2.pause()
    
@@ -172,13 +174,13 @@ def process(categoryToProcess, regressionOnly = False, classification = "NB", re
          timer2.unpause()
          if not regressors.get(classification, False):
             if regression == "UW":
-               #regressors[classification] = Regressor.UniqueWeightsRegressor(categoryTrain, False)
                regressors[classification] = Regressor.UniqueWeightsRegressor(categoryTrain.getGroup(classification))
                regressors[classification].train(numFeaturesR)
             elif regression == "RF":
-               #regressors[classification] = Regressor.RandomForestRegressor(categoryTrain, False)
                regressors[classification] = Regressor.RandomForestRegressor(categoryTrain.getGroup(classification))
-               #print "Regressor training for group %d" % (predictedGroup.getKey())
+               regressors[classification].train(numFeaturesR)
+            elif regression == "KNR":
+               regressors[classification] = Regressor.KNeighborsRegressor(categoryTrain.getGroup(classification))
                regressors[classification].train(numFeaturesR)
          regressor = regressors[classification]
          timer2.pause()

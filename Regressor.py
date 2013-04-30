@@ -1,5 +1,7 @@
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.ensemble import RandomForestRegressor as RFR
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.neighbors import KNeighborsRegressor as KNR
 import itertools
 import math
 
@@ -83,3 +85,47 @@ class RandomForestRegressor(Regressor):
       strings.append(" ".join(document.getBagOfWords2("all")))
       Z = self.vectorizer.fit_transform(strings).toarray()
       return self.regressor.predict(Z)
+      
+class KNeighborsRegressor(Regressor):
+   def findImportantFeatures(self, numFeatures = 500):
+      self.features = []
+      count = 0
+      if self.isGroup:
+         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getMI(word, self.trainSet), reverse=True):
+            self.features.append(key)
+            count += 1
+            if count == numFeatures:
+               self.minMI = self.trainSet.getMI(key, self.trainSet)
+               break
+      else:
+         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getUniqueWeightOf(word), reverse=True):
+            self.features.append(key)
+            count += 1
+            if count == numFeatures:
+               self.minMI = self.trainSet.getUniqueWeightOf(key)
+               break
+         
+      
+   def train(self, numFeatures = 500):
+      self.regressor = KNR(n_neighbors=5,weights='uniform')
+      #self.findImportantFeatures(numFeatures)
+      self.vectorizer = TfidfVectorizer(vocabulary=self.trainSet.getVocabulary().keys(),use_idf=True,min_df=1)
+      #self.vectorizer = TfidfVectorizer(vocabulary=self.features, use_idf=True, min_df=1)
+      
+      strings = []
+      Y = []
+      
+      for docKey in self.trainSet.getDocuments():
+         document = self.trainSet.getDocument(docKey)
+         strings.append(" ".join(document.getBagOfWords2("all")))
+         Y.append(document.getSalary())
+      self.vectorizer.fit(strings)
+      X = self.vectorizer.transform(strings)
+      self.regressor.fit(X, Y)
+         
+   def predict(self, document):
+      strings = []
+      strings.append(" ".join(document.getBagOfWords2("all")))
+      Z = self.vectorizer.transform(strings).todense()
+      return self.regressor.predict(Z)
+
