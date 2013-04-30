@@ -17,7 +17,7 @@ def main():
    timer = Timer.Timer("Entire Program", 0, 0)
    if len(sys.argv) >= 3:
       print "Processing %s" % (sys.argv[2])
-      process(sys.argv[2].lower(), True, "NB", "SVR", 1000, 1000)
+      process(sys.argv[2].lower(), True, "NB", "SVR", 1000, 3000)
       timer.stop()
       return
    

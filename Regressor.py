@@ -91,17 +91,17 @@ class SVMRegressor(Regressor):
       #Selecting the important features
       self.features = []
       count = 0
-      for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getUniqueWeight(word), reverse=True):
+      for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getUniqueWeightOf(word), reverse=True):
          count += 1
          self.features.append(key)
          if count == numFeatures:
+            print "Count:: ",count
             break
 
 
    def train(self, numFeatures = 1000):
       self.findImportantFeatures(numFeatures)
-      print "Came here: Before getting killed"
-      self.vectorizer = CountVectorizer(self.features,min_df = 1)
+      self.vectorizer = CountVectorizer(vocabulary = self.features,min_df = 1)
       self.regressor = SVR(kernel='linear', C=25, epsilon=10)
       strings = []
       Y = []
@@ -109,7 +109,6 @@ class SVMRegressor(Regressor):
          document = self.trainSet.getDocument(docKey)
          strings.append(" ".join(document.getBagOfWords2("all")))
          Y.append(document.getSalary())
-      print "Came here: Before getting killed"
       X = self.vectorizer.fit_transform(strings)
       self.regressor.fit(X,Y)
 
