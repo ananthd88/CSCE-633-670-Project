@@ -29,15 +29,27 @@ def main():
       for row in reader:
          cat = row["Category"].lower()
          if not cats.get(cat, False):
-            cats[cat] = 0
-         cats[cat] += 1
+            cats[cat] = [0, 0, 0, 0.0]
+         cats[cat][0] += 1
+         if cats[cat][0] % 4 == 0:
+            cats[cat][2] += 1
+         else:
+            cats[cat][1] += 1
+      
    finally:
       inputfile.close()
-   meanErrors = {}
    for cat in cats:
-      meanErrors[cat] = process(cat)
+      cats[cat][3] = process(cat, False, "NB", "RF", 1000, 1000)
+   
+   total = [0, 0, 0, 0.0, 0.0]
    for cat in cats:
-      print "%s : %d : %f" % (cat, cats[cat], meanErrors[cat])
+      print "\"%s\", %d, %d, %d, %f" % (cat, cats[cat][0], cats[cat][1], cats[cat][2], cats[cat][3])
+      total[0] += cats[cat][0]
+      total[1] += cats[cat][1]
+      total[3] = (total[3] * total[2] + cats[cat][3] * cats[cat][2]) / (total[2] + cats[cat][2])
+      total[4] = total[4] + (cats[cat][3] * cats[cat][2] - total[4]) / (total[2] + cats[cat][2])
+      total[2] += cats[cat][2]
+   print "\"%s\", %d, %d, %d, %f, %f" % ("total", total[0], total[1], total[2], total[3], total[4])
    timer.stop()
 def process(categoryToProcess, regressionOnly = False, classification = "NB", regression = "RF", numFeaturesC = 1000, numFeaturesR = 1000):
    #categoryToProcess = "it jobs"
