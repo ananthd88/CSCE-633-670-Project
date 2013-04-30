@@ -1,8 +1,10 @@
 import wx
+import PayMaster
+import sys
 
 class DemoPanel(wx.Panel):
 
-   def __init__(self, parent, *args, **kwargs):
+   def __init__(self, parent,inputfile, *args, **kwargs):
       wx.Panel.__init__(self, parent, *args, **kwargs)
       self.parent = parent
      
@@ -87,44 +89,70 @@ class DemoPanel(wx.Panel):
       
       self.SetSizerAndFit(Sizer)
 
+      self.regressorDict = {"":"UWR","K Nearest Neighbours":"KNR","SVM":"SVR","RandomForest":"RFR"}
+      self.classifierDict = {"Naive Bayes":"NBC","SVM":"SVC"}
+      self.inputfile = inputfile
       
 
 
   
    def OnTrain(self, event=None):
    #Bring up a wx.MessageDialog with a useless message.
-      dlg = wx.MessageDialog(self, message='A completely useless message', caption='A Message Box', style=wx.OK|wx.ICON_INFORMATION)
-      dlg.ShowModal()
-      dlg.Destroy()
+      
 
-      s = self.featureTextBox.getValue()
-      if s.isdigit() and (self.classifierComboBox.getValue() != "" or self.regressorComboBox.getValue() != "")  :
-         feature = float(s)
-         self.adTextBox = ""
-         self.actSalaryTextBox     = ""
-         self.predictSalaryTextBox = ""
-         self.runningMeanTextBox   = ""
-         self.errorTextBox         = ""
-         #TODO : Put the mean and sd of the category
-         self.meanCategoryTextBox  = ""
-         self.sdCategoryTextBox    = ""
- 
+      s = self.featureTextBox.GetValue()
+      classifier = self.classifierComboBox.GetValue()
+      regressor = self.regressorComboBox.GetValue()
+      
+      if s.isdigit() and int(s) > 0 and (classifier != "" or regressor != ""):
+         features = int(s)
+         self.refresh()
+          
+         self.payMaster = PayMaster.PayMaster(self.inputfile,(str)(self.categoryComboBox.GetValue()).lower())
+         
+         if self.classifierComboBox.getValue() != "":
+            self.payMaster.train(False,self.classifierDict.get(classifier),self.regressorDict.get(regressor), features, features)
+         else:
+            self.payMaster.train(True,None,self.regressorDict.get(regressor), features, features)
 
+         self.meanCategoryTextBox  = self.payMaster.getMean()
+         self.sdCategoryTextBox    = self.payMaster.getStdDeviation()
+
+      else:
+         dlg = wx.MessageDialog(self, message='Please select the number of features', caption='Error', style=wx.OK)
+         dlg.ShowModal()
+         dlg.Destroy()
+
+
+         
    def OnPredict(self, event=None):
-   #Bring up a wx.MessageDialog with a useless message.
-      dlg = wx.MessageDialog(self, message='A completely useless message', caption='A Message Box', style=wx.OK|wx.ICON_INFORMATION)
-      dlg.ShowModal()
-      dlg.Destroy()
+   #Predict the salary for the current ad.
+        print "came here" 
    
    def OnNextAd(self, event=None):
-   #Bring up a wx.MessageDialog with a useless message.
-      dlg = wx.MessageDialog(self, message='A completely useless message', caption='A Message Box', style=wx.OK|wx.ICON_INFORMATION)
-      dlg.ShowModal()
-      dlg.Destroy()
+   #Get the next advertisement.
+      if (self.payMaster.getNextDocument()):
+         document = self.payMaster.getNextDocument()
+         self.actSalaryTextBox.setValue(document.getSalaryNorm())
+         self.adTextBox.setValue("Title:" + ' '.join(document.getTitle()) + '\nDescription:' + ' '.join(document.getDescription()) + '\nCompany:' + document.getCompany() + '\nLocation:' + document.getRawLocation())
+      else:
+         dlg = wx.MessageDialog(self, message='All documents tested.Please select a new category', caption='Information', style=wx.OK|wx.ICON_INFORMATION)
+         dlg.ShowModal()
+         dlg.Destroy()
+  	
+	
+   def refresh(self):
+   #Refreshes the whole data
+      self.adTextBox            = ""
+      self.actSalaryTextBox     = ""
+      self.predictSalaryTextBox = ""
+      self.runningMeanTextBox   = ""
+      self.errorTextBox         = ""
+
 
 class DemoFrame(wx.Frame):
 #Main Frame holding the Panel.
-   def __init__(self, *args, **kwargs):
+   def __init__(self, inputfile,  *args, **kwargs):
    #Create the DemoFrame.
       wx.Frame.__init__(self, *args, **kwargs)
 
@@ -139,7 +167,7 @@ class DemoFrame(wx.Frame):
       self.SetMenuBar(MenuBar)
 
       # Add the Widget Panel
-      self.Panel = DemoPanel(self)
+      self.Panel = DemoPanel(self,inputfile)
 
       self.Fit()
    
@@ -149,6 +177,8 @@ class DemoFrame(wx.Frame):
   
 if __name__ == '__main__':
     app = wx.App()
-    frame = DemoFrame(None, title="The Pay Master")
+    if len(sys.argv) > 1:
+    	inputfile = open(sys.argv[1], 'rt')
+    frame = DemoFrame(inputfile,None, title="The Pay Master")
     frame.Show()
     app.MainLoop()
