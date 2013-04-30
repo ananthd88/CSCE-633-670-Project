@@ -29,6 +29,7 @@ class DemoPanel(wx.Panel):
       self.meanCategoryTextBox  = wx.TextCtrl(self, style = wx.TE_READONLY)
       self.sdCategoryTextBox    = wx.TextCtrl(self, style = wx.TE_READONLY)
       self.featureTextBox       = wx.TextCtrl(self)
+      self.featureTextBox.SetValue("100")
       #TODO : Remember to check for zero features or parse for numbers      
 
       self.trainButton = wx.Button(self, label = "Train")
@@ -42,8 +43,11 @@ class DemoPanel(wx.Panel):
       classifiers = ["","Naive Bayes","SVM"]
       regressors = ["","K Nearest Neighbours","SVM","RandomForest"]
       self.categoryComboBox   = wx.ComboBox(self,style = wx.CB_READONLY, choices = category_list)
+      self.categoryComboBox.SetValue("Part Time Jobs")
       self.classifierComboBox = wx.ComboBox(self,style = wx.CB_READONLY, choices = classifiers)
+      self.classifierComboBox.SetValue("Naive Bayes")
       self.regressorComboBox  = wx.ComboBox(self,style = wx.CB_READONLY, choices = regressors)
+      self.regressorComboBox.SetValue("RandomForest")
 
       firstRow = wx.GridBagSizer(hgap = 5,vgap = 5)
       firstRow.Add(categoryLabel,flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, pos = (0,0),border = 5)
@@ -110,13 +114,17 @@ class DemoPanel(wx.Panel):
           
          self.payMaster = PayMaster.PayMaster(self.inputfile,(str)(self.categoryComboBox.GetValue()).lower())
          
-         if self.classifierComboBox.getValue() != "":
+         if self.classifierComboBox.GetValue() != "":
             self.payMaster.train(False,self.classifierDict.get(classifier),self.regressorDict.get(regressor), features, features)
          else:
             self.payMaster.train(True,None,self.regressorDict.get(regressor), features, features)
 
-         self.meanCategoryTextBox  = self.payMaster.getMean()
-         self.sdCategoryTextBox    = self.payMaster.getStdDeviation()
+         self.meanCategoryTextBox.SetValue(str(self.payMaster.getMeanSalary()))
+         self.sdCategoryTextBox.SetValue(str(self.payMaster.getStdDeviationSalary()))
+         
+         dlg = wx.MessageDialog(self, message='Training done', caption='Information', style=wx.OK)
+         dlg.ShowModal()
+         dlg.Destroy()
 
       else:
          dlg = wx.MessageDialog(self, message='Please select the number of features', caption='Error', style=wx.OK)
@@ -133,8 +141,8 @@ class DemoPanel(wx.Panel):
    #Get the next advertisement.
       if (self.payMaster.getNextDocument()):
          document = self.payMaster.getNextDocument()
-         self.actSalaryTextBox.setValue(document.getSalaryNorm())
-         self.adTextBox.setValue("Title:" + ' '.join(document.getTitle()) + '\nDescription:' + ' '.join(document.getDescription()) + '\nCompany:' + document.getCompany() + '\nLocation:' + document.getRawLocation())
+         self.actSalaryTextBox.SetValue(str(document.getSalary()))
+         self.adTextBox.SetValue("Title:" + ' '.join(document.getTitle()) + '\nDescription:' + ' '.join(document.getDescription()) + '\nCompany:' + document.getCompany().getName() + '\nLocation:' + ' '.join(document.getLocation()))
       else:
          dlg = wx.MessageDialog(self, message='All documents tested.Please select a new category', caption='Information', style=wx.OK|wx.ICON_INFORMATION)
          dlg.ShowModal()
@@ -143,11 +151,12 @@ class DemoPanel(wx.Panel):
 	
    def refresh(self):
    #Refreshes the whole data
-      self.adTextBox            = ""
-      self.actSalaryTextBox     = ""
-      self.predictSalaryTextBox = ""
-      self.runningMeanTextBox   = ""
-      self.errorTextBox         = ""
+      self.adTextBox.SetValue("")
+      self.actSalaryTextBox.SetValue("")
+      self.predictSalaryTextBox.SetValue("")
+      self.runningMeanTextBox.SetValue("")
+      self.errorTextBox.SetValue("")
+
 
 
 class DemoFrame(wx.Frame):
@@ -178,7 +187,9 @@ class DemoFrame(wx.Frame):
 if __name__ == '__main__':
     app = wx.App()
     if len(sys.argv) > 1:
-    	inputfile = open(sys.argv[1], 'rt')
-    frame = DemoFrame(inputfile,None, title="The Pay Master")
-    frame.Show()
-    app.MainLoop()
+    	inputfile = sys.argv[1]
+    	frame = DemoFrame(inputfile,None, title="The Pay Master")
+    	frame.Show()
+    	app.MainLoop()
+    else:
+        print "Please pass the correct filename as the argument"
