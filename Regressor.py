@@ -28,10 +28,10 @@ class UniqueWeightsRegressor(Regressor):
                self.minMI = self.trainSet.getMI(key, self.trainSet)
                break
       else:
-         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getUniqueWeight(word), reverse=True):
+         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getUniqueWeightOf(word), reverse=True):
             count += 1
             if countmi == numFeatures:
-               self.minMI = self.trainSet.getUniqueWeight(key)
+               self.minMI = self.trainSet.getUniqueWeightOf(key)
                break
          
    def predict(self, document):
@@ -58,11 +58,11 @@ class RandomForestRegressor(Regressor):
                self.minMI = self.trainSet.getMI(key, self.trainSet)
                break
       else:
-         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getUniqueWeight(word), reverse=True):
+         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getUniqueWeightOf(word), reverse=True):
             self.features.append(key)
             count += 1
             if count == numFeatures:
-               self.minMI = self.trainSet.getUniqueWeight(key)
+               self.minMI = self.trainSet.getUniqueWeightOf(key)
                break
          
    def train(self, numFeatures = 500):

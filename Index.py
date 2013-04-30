@@ -167,9 +167,9 @@ class Index:                     # Index for a collection
          return
       if not self.inVocabulary(word):
          self.vocabulary[word] = TermEntry()
-         if word[0] == 't':
+         if word[0:2] == 't_':
             self.numTitleWords += 1
-         elif word[0] == 'd':
+         elif word[0:2] == 'd_':
             self.numDescriptionWords += 1
       termEntry = self.vocabulary[word]
       termEntry.incrementTotalCount()
