@@ -26,13 +26,13 @@ class UniqueWeightsRegressor(Regressor):
       if self.isGroup:
          for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getMI(word, self.trainSet), reverse=True):
             count += 1
-            if countmi == numFeatures:
+            if count == numFeatures:
                self.minMI = self.trainSet.getMI(key, self.trainSet)
                break
       else:
          for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getUniqueWeightOf(word), reverse=True):
             count += 1
-            if countmi == numFeatures:
+            if count == numFeatures:
                self.minMI = self.trainSet.getUniqueWeightOf(key)
                break
    def predict(self, document):
@@ -43,7 +43,7 @@ class UniqueWeightsRegressor(Regressor):
       for word in set(document.getBagOfWords2("all")):
          if self.minMI and self.trainSet.getMI(word, self.trainSet) < self.minMI:
             continue
-         prediction += self.group.getUniqueWeightOf(word) * 5
+         prediction += self.trainSet.getUniqueWeightOf(word) * 5
       predictedSalary += (prediction/100.0) * stdDeviation
       return predictedSalary
       

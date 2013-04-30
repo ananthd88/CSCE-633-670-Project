@@ -18,6 +18,160 @@ def main():
    timer = Timer.Timer("Entire Program", 0, 0)
    
    isRegressionOnly = False
+   classification = "NBC"
+   regression = "SVR"
+   #regression = "KNR"
+   numFeaturesC = 1000
+   numFeaturesR = 1000
+   
+   if classification not in ["NBC", "SVC"] or regression not in ["KNR", "RFR", "SVR", "UWR"]:
+      print "Invalid classifier or regressor"
+      return
+   if len(sys.argv) >= 3:
+      print "Processing %s" % (sys.argv[2])
+      process(sys.argv[2].lower(), isRegressionOnly, classification, regression, numFeaturesC, numFeaturesR)
+      timer.stop()
+      return
+   inputfile = open(sys.argv[1], 'rt')
+   cats = {}
+   try:
+      reader = csv.DictReader(inputfile)
+      for row in reader:
+         cat = row["Category"].lower()
+         if not cats.get(cat, False):
+            cats[cat] = [0, 0, 0, 0.0]
+         cats[cat][0] += 1
+         if cats[cat][0] % 4 == 0:
+            cats[cat][2] += 1
+         else:
+            cats[cat][1] += 1
+      
+   finally:
+      inputfile.close()
+   for cat in cats:
+      cats[cat][3] = process(cat, isRegressionOnly, classification, regression, numFeaturesC, numFeaturesR)      
+   
+   total = [0, 0, 0, 0.0, 0.0]
+   for cat in cats:
+      print "\"%s\", %d, %d, %d, %f" % (cat, cats[cat][0], cats[cat][1], cats[cat][2], cats[cat][3])
+      total[0] += cats[cat][0]
+      total[1] += cats[cat][1]
+      total[3] = (total[3] * total[2] + cats[cat][3] * cats[cat][2]) / (total[2] + cats[cat][2])
+      total[4] = total[4] + (cats[cat][3] * cats[cat][2] - total[4]) / (total[2] + cats[cat][2])
+      total[2] += cats[cat][2]
+   print "\"%s\", %d, %d, %d, %f, %f" % ("total", total[0], total[1], total[2], total[3], total[4])
+   timer.stop()
+   
+
+
+
+
+
+
+   timer = Timer.Timer("Entire Program", 0, 0)
+   
+   isRegressionOnly = False
+   classification = "NBC"
+   regression = "RFR"
+   numFeaturesC = 1000
+   numFeaturesR = 1000
+   
+   if classification not in ["NBC", "SVC"] or regression not in ["KNR", "RFR", "SVR", "UWR"]:
+      print "Invalid classifier or regressor"
+      return
+   if len(sys.argv) >= 3:
+      print "Processing %s" % (sys.argv[2])
+      process(sys.argv[2].lower(), isRegressionOnly, classification, regression, numFeaturesC, numFeaturesR)
+      timer.stop()
+      return
+   inputfile = open(sys.argv[1], 'rt')
+   cats = {}
+   try:
+      reader = csv.DictReader(inputfile)
+      for row in reader:
+         cat = row["Category"].lower()
+         if not cats.get(cat, False):
+            cats[cat] = [0, 0, 0, 0.0]
+         cats[cat][0] += 1
+         if cats[cat][0] % 4 == 0:
+            cats[cat][2] += 1
+         else:
+            cats[cat][1] += 1
+      
+   finally:
+      inputfile.close()
+   for cat in cats:
+      cats[cat][3] = process(cat, isRegressionOnly, classification, regression, numFeaturesC, numFeaturesR)      
+   
+   total = [0, 0, 0, 0.0, 0.0]
+   for cat in cats:
+      print "\"%s\", %d, %d, %d, %f" % (cat, cats[cat][0], cats[cat][1], cats[cat][2], cats[cat][3])
+      total[0] += cats[cat][0]
+      total[1] += cats[cat][1]
+      total[3] = (total[3] * total[2] + cats[cat][3] * cats[cat][2]) / (total[2] + cats[cat][2])
+      total[4] = total[4] + (cats[cat][3] * cats[cat][2] - total[4]) / (total[2] + cats[cat][2])
+      total[2] += cats[cat][2]
+   print "\"%s\", %d, %d, %d, %f, %f" % ("total", total[0], total[1], total[2], total[3], total[4])
+   timer.stop()
+   
+   
+   
+   
+   
+   
+   timer = Timer.Timer("Entire Program", 0, 0)
+   
+   isRegressionOnly = False
+   classification = "NBC"
+   regression = "SVR"
+   numFeaturesC = 1000
+   numFeaturesR = 1000
+   
+   if classification not in ["NBC", "SVC"] or regression not in ["KNR", "RFR", "SVR", "UWR"]:
+      print "Invalid classifier or regressor"
+      return
+   if len(sys.argv) >= 3:
+      print "Processing %s" % (sys.argv[2])
+      process(sys.argv[2].lower(), isRegressionOnly, classification, regression, numFeaturesC, numFeaturesR)
+      timer.stop()
+      return
+   inputfile = open(sys.argv[1], 'rt')
+   cats = {}
+   try:
+      reader = csv.DictReader(inputfile)
+      for row in reader:
+         cat = row["Category"].lower()
+         if not cats.get(cat, False):
+            cats[cat] = [0, 0, 0, 0.0]
+         cats[cat][0] += 1
+         if cats[cat][0] % 4 == 0:
+            cats[cat][2] += 1
+         else:
+            cats[cat][1] += 1
+      
+   finally:
+      inputfile.close()
+   for cat in cats:
+      cats[cat][3] = process(cat, isRegressionOnly, classification, regression, numFeaturesC, numFeaturesR)      
+   
+   total = [0, 0, 0, 0.0, 0.0]
+   for cat in cats:
+      print "\"%s\", %d, %d, %d, %f" % (cat, cats[cat][0], cats[cat][1], cats[cat][2], cats[cat][3])
+      total[0] += cats[cat][0]
+      total[1] += cats[cat][1]
+      total[3] = (total[3] * total[2] + cats[cat][3] * cats[cat][2]) / (total[2] + cats[cat][2])
+      total[4] = total[4] + (cats[cat][3] * cats[cat][2] - total[4]) / (total[2] + cats[cat][2])
+      total[2] += cats[cat][2]
+   print "\"%s\", %d, %d, %d, %f, %f" % ("total", total[0], total[1], total[2], total[3], total[4])
+   timer.stop()
+   
+   
+   
+   
+   
+   timer = Timer.Timer("Entire Program", 0, 0)
+   
+   isRegressionOnly = True
    classification = "SVC"
    regression = "KNR"
    numFeaturesC = 1000
@@ -48,7 +202,7 @@ def main():
    finally:
       inputfile.close()
    for cat in cats:
-      cats[cat][3] = process(cat, isRegressionOnly, classification, regression, numFeaturesC, numFeaturesR)
+      cats[cat][3] = process(cat, isRegressionOnly, classification, regression, numFeaturesC, numFeaturesR)      
    
    total = [0, 0, 0, 0.0, 0.0]
    for cat in cats:
@@ -62,6 +216,105 @@ def main():
    timer.stop()
    
    
+   
+   
+   
+   timer = Timer.Timer("Entire Program", 0, 0)
+   
+   isRegressionOnly = True
+   classification = "SVC"
+   regression = "RFR"
+   numFeaturesC = 1000
+   numFeaturesR = 1000
+   
+   if classification not in ["NBC", "SVC"] or regression not in ["KNR", "RFR", "SVR", "UWR"]:
+      print "Invalid classifier or regressor"
+      return
+   if len(sys.argv) >= 3:
+      print "Processing %s" % (sys.argv[2])
+      process(sys.argv[2].lower(), isRegressionOnly, classification, regression, numFeaturesC, numFeaturesR)
+      timer.stop()
+      return
+   inputfile = open(sys.argv[1], 'rt')
+   cats = {}
+   try:
+      reader = csv.DictReader(inputfile)
+      for row in reader:
+         cat = row["Category"].lower()
+         if not cats.get(cat, False):
+            cats[cat] = [0, 0, 0, 0.0]
+         cats[cat][0] += 1
+         if cats[cat][0] % 4 == 0:
+            cats[cat][2] += 1
+         else:
+            cats[cat][1] += 1
+      
+   finally:
+      inputfile.close()
+   for cat in cats:
+      cats[cat][3] = process(cat, isRegressionOnly, classification, regression, numFeaturesC, numFeaturesR)      
+   
+   total = [0, 0, 0, 0.0, 0.0]
+   for cat in cats:
+      print "\"%s\", %d, %d, %d, %f" % (cat, cats[cat][0], cats[cat][1], cats[cat][2], cats[cat][3])
+      total[0] += cats[cat][0]
+      total[1] += cats[cat][1]
+      total[3] = (total[3] * total[2] + cats[cat][3] * cats[cat][2]) / (total[2] + cats[cat][2])
+      total[4] = total[4] + (cats[cat][3] * cats[cat][2] - total[4]) / (total[2] + cats[cat][2])
+      total[2] += cats[cat][2]
+   print "\"%s\", %d, %d, %d, %f, %f" % ("total", total[0], total[1], total[2], total[3], total[4])
+   timer.stop()     
+   
+   
+   
+   
+   
+   
+   timer = Timer.Timer("Entire Program", 0, 0)
+   
+   isRegressionOnly = True
+   classification = "SVC"
+   regression = "SVR"
+   numFeaturesC = 1000
+   numFeaturesR = 1000
+   
+   if classification not in ["NBC", "SVC"] or regression not in ["KNR", "RFR", "SVR", "UWR"]:
+      print "Invalid classifier or regressor"
+      return
+   if len(sys.argv) >= 3:
+      print "Processing %s" % (sys.argv[2])
+      process(sys.argv[2].lower(), isRegressionOnly, classification, regression, numFeaturesC, numFeaturesR)
+      timer.stop()
+      return
+   inputfile = open(sys.argv[1], 'rt')
+   cats = {}
+   try:
+      reader = csv.DictReader(inputfile)
+      for row in reader:
+         cat = row["Category"].lower()
+         if not cats.get(cat, False):
+            cats[cat] = [0, 0, 0, 0.0]
+         cats[cat][0] += 1
+         if cats[cat][0] % 4 == 0:
+            cats[cat][2] += 1
+         else:
+            cats[cat][1] += 1
+      
+   finally:
+      inputfile.close()
+   for cat in cats:
+      cats[cat][3] = process(cat, isRegressionOnly, classification, regression, numFeaturesC, numFeaturesR)      
+   
+   total = [0, 0, 0, 0.0, 0.0]
+   for cat in cats:
+      print "\"%s\", %d, %d, %d, %f" % (cat, cats[cat][0], cats[cat][1], cats[cat][2], cats[cat][3])
+      total[0] += cats[cat][0]
+      total[1] += cats[cat][1]
+      total[3] = (total[3] * total[2] + cats[cat][3] * cats[cat][2]) / (total[2] + cats[cat][2])
+      total[4] = total[4] + (cats[cat][3] * cats[cat][2] - total[4]) / (total[2] + cats[cat][2])
+      total[2] += cats[cat][2]
+   print "\"%s\", %d, %d, %d, %f, %f" % ("total", total[0], total[1], total[2], total[3], total[4])
+   timer.stop()      
    
 def process(categoryToProcess, regressionOnly = False, classification = "NBC",regression = "RFR", numFeaturesC = 1000, numFeaturesR = 1000):
    timer0 = Timer.Timer("Processing " + categoryToProcess, 0, 0)
@@ -158,7 +411,7 @@ def process(categoryToProcess, regressionOnly = False, classification = "NBC",re
    meanSalaryError = 0.0
    regressors = {}
    
-   timer2 = Timer.Timer("Regression training", 0, 0)
+   timer2 = Timer.Timer(regression + " Regression training", 0, 0)
    if regressionOnly:
       regressor = {  "KNR" : Regressor.KNeighborsRegressor(categoryTrain, False),
                      "RFR" : Regressor.RandomForestRegressor(categoryTrain, False),
@@ -187,13 +440,17 @@ def process(categoryToProcess, regressionOnly = False, classification = "NBC",re
       if not regressionOnly:
          timer2.unpause()
          if not regressors.get(classification, False):
-            regressors[classification] = {  
-                      "KNR" : Regressor.KNeighborsRegressor(categoryTrain.getGroup(classification)),
-                      "RFR" : Regressor.RandomForestRegressor(categoryTrain.getGroup(classification)),
-                      "SVR" : Regressor.SVMRegressor(categoryTrain.getGroup(classification)),
-                      "UWR" : Regressor.UniqueWeightsRegressor(categoryTrain.getGroup(classification)),
-            }[regression]      
-            regressors[classification].train(numFeaturesR)
+            try:
+               regressors[classification] = {
+                         "KNR" : Regressor.KNeighborsRegressor(categoryTrain.getGroup(classification)),
+                         "RFR" : Regressor.RandomForestRegressor(categoryTrain.getGroup(classification)),
+                         "SVR" : Regressor.SVMRegressor(categoryTrain.getGroup(classification)),
+                         "UWR" : Regressor.UniqueWeightsRegressor(categoryTrain.getGroup(classification)),
+               }[regression]
+               regressors[classification].train(numFeaturesR)
+            except:
+               regressors[classification] = Regressor.UniqueWeightsRegressor(categoryTrain.getGroup(classification))
+               regressors[classification].train(numFeaturesR)
          timer2.pause()
          regressor = regressors[classification]
          

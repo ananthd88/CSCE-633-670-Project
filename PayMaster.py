@@ -82,13 +82,17 @@ class PayMaster:
             return False
          return self.trainCR(classification, regression, numFeaturesC, numFeaturesR)      
    def trainR(self, regression, numFeaturesR):
-      self.regressor = {  
-         "KNR" : Regressor.KNeighborsRegressor(self.trainSet, False),
-         "RFR" : Regressor.RandomForestRegressor(self.trainSet, False),
-         "SVR" : Regressor.SVMRegressor(self.trainSet, False),
-         "UWR" : Regressor.UniqueWeightsRegressor(self.trainSet, False),
-      }[regression]
-      self.regressor.train(numFeaturesR)
+      try:
+         self.regressor = {  
+            "KNR" : Regressor.KNeighborsRegressor(self.trainSet, False),
+            "RFR" : Regressor.RandomForestRegressor(self.trainSet, False),
+            "SVR" : Regressor.SVMRegressor(self.trainSet, False),
+            "UWR" : Regressor.UniqueWeightsRegressor(self.trainSet, False),
+         }[regression]
+         self.regressor.train(numFeaturesR)
+      except:
+         self.regressor = Regressor.UniqueWeightsRegressor(self.trainSet, False)
+         self.regressor.train(numFeaturesR)
       return True
    def trainCR(self, classification, regression, numFeaturesC, numFeaturesR):
       self.classifier = {
@@ -98,13 +102,17 @@ class PayMaster:
       classifier.train(numFeaturesC)
       for (key, group) in self.trainSet.getGroups().items():
          if group.getNumDocuments():
-            regressors[key] = {
-               "KNR" : Regressor.KNeighborsRegressor(categoryTrain.getGroup(classification)),
-               "RFR" : Regressor.RandomForestRegressor(categoryTrain.getGroup(classification)),
-               "SVR" : Regressor.SVMRegressor(categoryTrain.getGroup(classification)),
-               "UWR" : Regressor.UniqueWeightsRegressor(categoryTrain.getGroup(classification)),
-            }[regression]
-            regressors[key].train(numFeaturesR)
+            try:
+               regressors[key] = {
+                  "KNR" : Regressor.KNeighborsRegressor(categoryTrain.getGroup(classification)),
+                  "RFR" : Regressor.RandomForestRegressor(categoryTrain.getGroup(classification)),
+                  "SVR" : Regressor.SVMRegressor(categoryTrain.getGroup(classification)),
+                  "UWR" : Regressor.UniqueWeightsRegressor(categoryTrain.getGroup(classification)),
+               }[regression]
+               regressors[key].train(numFeaturesR)
+            except:
+               regressors[key] = Regressor.UniqueWeightsRegressor(categoryTrain.getGroup(classification))
+               regressors[key].train(numFeaturesR)
    def getNextDocument(self):
       if self.nextDocument < 0 or self.nextDoc >= len(self.documents):
          return False
