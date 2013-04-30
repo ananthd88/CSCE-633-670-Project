@@ -262,7 +262,6 @@ class Index:                     # Index for a collection
             else:
                correct_word = spellchecker.correct(word)
                if word != correct_word:
-                  print "%s -> %s" % (word, correct_word)
                   title.append(correct_word)
                   correct_word = "t_" + correct_word
                   self.addToken(correct_word, document, group)
@@ -291,7 +290,6 @@ class Index:                     # Index for a collection
             else:
                correct_word = spellchecker.correct(word)
                if word != correct_word:
-                  print "%s -> %s" % (word, correct_word)
                   description.append(correct_word)
                   correct_word = "d_" + correct_word
                   self.addToken(correct_word, document, group)   

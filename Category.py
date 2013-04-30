@@ -89,23 +89,16 @@ class Category:      # Class that abstracts a category of documents
    # Index
    # Populates the reverse index
    def processDocuments(self):
-      print "Processing documents - Creating the reverse index"
       for key in self.documents:
          self.index.processDocument2(self.documents[key])
-      self.index.reverseIndexDone = True
-      print "Total no. of words in vocabulary = %d" % (self.index.getSizeOfVocabulary())
-      #print "Total no. of title words in vocabulary = %d" % (self.index.numTitleWords)
-      #print "Total no. of description words in vocabulary = %d" % (self.index.numDescriptionWords)
+      self.index.reverseIndexDone = True      
    # Computes all weights
    def computeAllWeights(self):
-      print "Computing All Weights"
       self.index.computeAllWeights()
    # Computes all  TFIDF
    def computeAllTFIDF(self):
-      print "Computing All TFIDF"
       self.index.computeAllTFIDF()
    def computeAllMI(self):
-      print "Computing All MI and X2"
       self.index.computeAllMI()
    def assignGroups(self):
       for docKey in self.documents:
@@ -207,9 +200,6 @@ class Category:      # Class that abstracts a category of documents
                nonzeroWords += 1
             wordCount += 1
          Y[docCount] = document.getGroup().getKey()
-         print "%d -> %d" % (docCount, Y[docCount])
-         #if output["Y"][docCount] != 0:
-         #   print "Y[%d] Group - %d, nonzeroWords = %d" % (docCount, output["Y"][docCount], nonzeroWords)
          docCount += 1
       X = lil_matrix(X)
       output = {"X": X, "Y": Y}
