@@ -17,7 +17,7 @@ def main():
    timer = Timer.Timer("Entire Program", 0, 0)
    if len(sys.argv) >= 3:
       print "Processing %s" % (sys.argv[2])
-      process(sys.argv[2].lower(), False, "NB", "RF", 1000, 1000)
+      process(sys.argv[2].lower(), True, "NB", "SVR", 1000, 1000)
       timer.stop()
       return
    
@@ -118,7 +118,7 @@ def process(categoryToProcess, regressionOnly = False, classification = "NB", re
    
    categoryTrain = trainSet.getCategory(1, False)
    categoryTest = testSet.getCategory(1, False)
-      
+     
    
    meanErrorGroup = 0.0
    count = 0.0
@@ -154,6 +154,8 @@ def process(categoryToProcess, regressionOnly = False, classification = "NB", re
          regressor = Regressor.UniqueWeightsRegressor(categoryTrain, False)
       elif regression == "RF":
          regressor = Regressor.RandomForestRegressor(categoryTrain, False)
+      elif regression == "SVR":
+         regressor = Regressor.SVMRegressor(categoryTrain, False)
       regressor.train(numFeaturesR)
    timer2.pause()
    
