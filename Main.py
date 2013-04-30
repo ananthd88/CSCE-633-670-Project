@@ -39,7 +39,7 @@ def main():
    finally:
       inputfile.close()
    for cat in cats:
-      cats[cat][3] = process(cat, False, "NB", "RF", 1000, 1000)
+      cats[cat][3] = process(cat, True, "NB", "RF", 1000, 1000)
    
    total = [0, 0, 0, 0.0, 0.0]
    for cat in cats:
@@ -74,22 +74,20 @@ def process(categoryToProcess, regressionOnly = False, classification = "NB", re
       inputfile.close()
       timer.stop()
    
+   categoryTrain = trainSet.getCategory(1, False)
+   categoryTest = testSet.getCategory(1, False)
+   
+   print "Category - %s" % (categoryTrain.getName())
    print "Training set"
-   for categoryKey, category in trainSet.getCategories().items():
-      name = category.getName()
-      mean = category.getMean()
-      stdD = category.getStdDeviation()
-      numD = category.getNumDocuments()
-      print "Stats for category: %s" % (name)
-      print "\tNum Docs                = %d" % (numD)
-      print "\tMean Salary             = %f" % (mean)
-      print "\tStd Deviation of Salary = %f" % (stdD)
-   print
+   mean = categoryTrain.getMean()
+   stdD = categoryTrain.getStdDeviation()
+   numD = categoryTrain.getNumDocuments()
+   print "\tNum Docs                = %d" % (numD)
+   print "\tMean Salary             = %f" % (mean)
+   print "\tStd Deviation of Salary = %f" % (stdD)
    print "Test set"
-   for categoryKey, category in testSet.getCategories().items():
-      name = category.getName()
-      numD = category.getNumDocuments()
-      print "%s : %d ads" % (name, numD)
+   numD = categoryTest.getNumDocuments()
+   print "\tNum Docs                = %d" % (numD)
    
    timer.start("Creating groups and assigning documents", 0, 0)
    trainSet.createGroups()
@@ -116,10 +114,7 @@ def process(categoryToProcess, regressionOnly = False, classification = "NB", re
    #trainSet.findImportantWords(2)
    #timer.stop()
    
-   categoryTrain = trainSet.getCategory(1, False)
-   categoryTest = testSet.getCategory(1, False)
       
-   
    meanErrorGroup = 0.0
    count = 0.0
    countCorrect = 0.0
@@ -204,7 +199,8 @@ def process(categoryToProcess, regressionOnly = False, classification = "NB", re
          countCorrect += 1
       timer3.pause()
    timer3.stop()
-   timer1.stop()
+   if not regressionOnly:
+      timer1.stop()
    timer2.stop()
    print "Avg error in salary prediction = %f" % (meanSalaryError)
    print "(Num, Avg) Positive errors = (%d, %f)" % (countpos, meanpos)

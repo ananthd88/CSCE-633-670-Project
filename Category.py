@@ -94,8 +94,8 @@ class Category:      # Class that abstracts a category of documents
          self.index.processDocument2(self.documents[key])
       self.index.reverseIndexDone = True
       print "Total no. of words in vocabulary = %d" % (self.index.getSizeOfVocabulary())
-      print "Total no. of title words in vocabulary = %d" % (self.index.numTitleWords)
-      print "Total no. of description words in vocabulary = %d" % (self.index.numDescriptionWords)
+      #print "Total no. of title words in vocabulary = %d" % (self.index.numTitleWords)
+      #print "Total no. of description words in vocabulary = %d" % (self.index.numDescriptionWords)
    # Computes all weights
    def computeAllWeights(self):
       print "Computing All Weights"
