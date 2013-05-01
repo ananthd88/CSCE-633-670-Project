@@ -131,7 +131,6 @@ class PayMaster:
          classification = self.classifier.classify(document)
          self.regressor = self.regressors[classification]
       predictedSalary = self.regressor.predict(document)
-      print "Hello", str(predictedSalary), " ",
       actualSalary = document.getSalary()
       self.predictedCount += 1
       self.runningMean += (math.fabs(predictedSalary - actualSalary) - self.runningMean) / self.predictedCount
@@ -144,6 +143,7 @@ class PayMaster:
          self.negMean += (math.fabs(predictedSalary - actualSalary) - self.negMean) / self.negCount
       if math.fabs(predictedSalary - actualSalary) < 3000.0:
          self.count3000 += 1
+      self.nextDocument += 1
       return predictedSalary
    def getMean(self):
       return self.runningMean

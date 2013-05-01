@@ -11,17 +11,43 @@ import math
 import re
 from sklearn import svm
 import gc
+import argparse
 
 # Just a comment
 def main():
    gc.enable()
    timer = Timer.Timer("Entire Program", 0, 0)
-   
-   isRegressionOnly = False
-   classification = "NBC"
-   regression = "RFR"
-   numFeaturesC = 1000
-   numFeaturesR = 1000
+   parser = argparse.ArgumentParser(prog = "PayMaster", description='Parser for PayMaster')
+   parser.add_argument('--version', action='version', version='The PayMaster 1.0')
+   parser.add_argument('--file', metavar = '<csv file>', type = argparse.FileType('r'), nargs = 1,
+                      help = 'File to read in the training and test sets')
+   parser.add_argument(
+   parser.add_argument('-c', metavar='<classifier>', type = str, nargs = 1,
+                      help='Classifier to be used, could be one of "NBC" or "SVM"')
+
+   parser.add_argument('-r', metavar='<regressor>', type = str, nargs = 1,
+                      help='Classifier to be used, could be one of "KNR", "RFR" or "SVR"')
+
+   parser.add_argument('--features', metavar='<number of features to be used>', type=int, nargs = 1,
+                      help='Number of features to be used')
+   parser.add_argument('--category', metavar = '<category>', type = str, nargs = 1,
+                      help = 'Category of jobs')
+   args = parser.parse_args(sys.argv[1:])
+   if args.c:
+      isRegressionOnly = False
+      classification = args.c[0]
+   if args.r:
+      regression = args.r[0]
+   if args.features:
+      numFeaturesC = args.features[0]
+      numFeaturesR = args.features[0]
+   if args.category:
+      
+   #isRegressionOnly = False
+   #classification = "NBC"
+   #regression = "RFR"
+   #numFeaturesC = 1000
+   #numFeaturesR = 1000
    
    if classification not in ["NBC", "SVC"] or regression not in ["KNR", "RFR", "SVR", "UWR"]:
       print "Invalid classifier or regressor"
