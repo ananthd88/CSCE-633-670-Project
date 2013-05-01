@@ -126,9 +126,11 @@ class SVMRegressor(Regressor):
       #Selecting the important features
       self.features = []
       count = 0
+      print "SVR Regrerssor features - ",
       for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getUniqueWeightOf(word), reverse=True):
          count += 1
          self.features.append(key)
+         print key, " ",
          if count == numFeatures:
             break
    def train(self, numFeatures = 1000):
@@ -143,6 +145,7 @@ class SVMRegressor(Regressor):
          Y.append(document.getSalary())
       X = self.vectorizer.fit_transform(strings)
       self.regressor.fit(X,Y)
+      self.regressor.score(X, Y)
    def predict(self, document):
       strings = []
       strings.append(" ".join(document.getBagOfWords2("all")))
