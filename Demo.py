@@ -31,21 +31,25 @@ class DemoPanel(wx.Panel):
       self.meanCategoryTextBox  = wx.TextCtrl(self, style = wx.TE_READONLY)
       self.sdCategoryTextBox    = wx.TextCtrl(self, style = wx.TE_READONLY)
       self.featureTextBox       = wx.TextCtrl(self)
+      self.featureTextBox.SetValue("100")
       #TODO : Remember to check for zero features or parse for numbers      
 
       self.trainButton = wx.Button(self, label = "Train")
       self.trainButton.Bind(wx.EVT_BUTTON, self.OnTrain)
-      self.predictButton = wx.Button(self, label = "Predict")
-      self.predictButton.Bind(wx.EVT_BUTTON, self.OnPredict)
-      self.nextAdButton = wx.Button(self, label = "Next Ad")
-      self.nextAdButton.Bind(wx.EVT_BUTTON, self.OnNextAd)
+      self.predictButton = wx.Button(self, label = "Predict Next")
+      self.predictButton.Bind(wx.EVT_BUTTON, self.OnPredictNext)
+      self.predictAllButton = wx.Button(self, label = "Predict All")
+      self.predictAllButton.Bind(wx.EVT_BUTTON, self.OnPredictAll)
        
-      category_list = ["Part Time Jobs","Engineering Jobs"]
+      category_list = ["Part Time Jobs","Engineering Jobs","Legal Jobs","Healthcare & Nursing Jobs","Graduate Jobs","Social Work Jobs"]
       classifiers = ["","Naive Bayes","SVM"]
       regressors = ["","K Nearest Neighbours","SVM","RandomForest"]
       self.categoryComboBox   = wx.ComboBox(self,style = wx.CB_READONLY, choices = category_list)
+      self.categoryComboBox.SetValue("Part Time Jobs")
       self.classifierComboBox = wx.ComboBox(self,style = wx.CB_READONLY, choices = classifiers)
+      self.classifierComboBox.SetValue("Naive Bayes")
       self.regressorComboBox  = wx.ComboBox(self,style = wx.CB_READONLY, choices = regressors)
+      self.regressorComboBox.SetValue("RandomForest")
 
       firstRow = wx.GridBagSizer(hgap = 5,vgap = 5)
       firstRow.Add(categoryLabel,flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, pos = (0,0),border = 5)
@@ -60,7 +64,7 @@ class DemoPanel(wx.Panel):
 
       middleRow = wx.GridBagSizer(hgap = 25, vgap = 5)
       middleRow.Add(adLabel, pos = (0,0))
-      middleRow.Add(self.nextAdButton, pos = (0,1))
+      middleRow.Add(self.predictAllButton, pos = (0,1))
       middleRow.Add(self.predictButton, pos = (0,2))
       middleRow.Add(self.adTextBox, pos = (1,0), span = (1,3),flag = wx.BOTTOM | wx.EXPAND, border = 5)
 
@@ -94,7 +98,8 @@ class DemoPanel(wx.Panel):
       self.regressorDict = {"":"UWR","K Nearest Neighbours":"KNR","SVM":"SVR","RandomForest":"RFR"}
       self.classifierDict = {"Naive Bayes":"NBC","SVM":"SVC"}
       self.inputfile = inputfile
-      
+      self.payMaster = PayMaster.PayMaster(self.inputfile,(str)(self.categoryComboBox.GetValue()).lower())
+         
 
 
   
@@ -110,15 +115,19 @@ class DemoPanel(wx.Panel):
          features = int(s)
          self.refresh()
           
-         self.payMaster = PayMaster.PayMaster(self.inputfile,(str)(self.categoryComboBox.GetValue()).lower())
+         self.payMaster.refresh((str)(self.categoryComboBox.GetValue()).lower())
          
-         if self.classifierComboBox.getValue() != "":
+         if self.classifierComboBox.GetValue() != "":
             self.payMaster.train(False,self.classifierDict.get(classifier),self.regressorDict.get(regressor), features, features)
          else:
             self.payMaster.train(True,None,self.regressorDict.get(regressor), features, features)
 
-         self.meanCategoryTextBox  = self.payMaster.getMean()
-         self.sdCategoryTextBox    = self.payMaster.getStdDeviation()
+         self.meanCategoryTextBox.SetValue(str(self.payMaster.getMeanSalary()))
+         self.sdCategoryTextBox.SetValue(str(self.payMaster.getStdDeviationSalary()))
+         
+         dlg = wx.MessageDialog(self, message='Training done', caption='Information', style=wx.OK)
+         dlg.ShowModal()
+         dlg.Destroy()
 
       else:
          dlg = wx.MessageDialog(self, message='Please select the number of features', caption='Error', style=wx.OK)
@@ -127,29 +136,43 @@ class DemoPanel(wx.Panel):
 
 
          
-   def OnPredict(self, event=None):
+   def OnPredictNext(self, event=None):
    #Predict the salary for the current ad.
-        print "came here" 
-   
-   def OnNextAd(self, event=None):
+         if (self.payMaster.getNextDocument()):
+            self.document = self.payMaster.getNextDocument()
+            self.actSalaryTextBox.SetValue(str(self.document.getSalary()))
+            self.adTextBox.SetValue("Title:" + ' '.join(self.document.getTitle()) + '\nDescription:' + ' '.join(self.document.getDescription()) + '\nCompany:' + self.document.getCompany().getName() + '\nLocation:' + ' '.join(self.document.getLocation()))
+            predictedSalary = self.payMaster.predictNextDocument()
+            self.predictSalaryTextBox.SetValue(str(predictedSalary))
+            self.errorTextBox.SetValue(str(predictedSalary - self.document.getSalary()))
+            self.runningMeanTextBox.SetValue(str(self.payMaster.getMean()))
+            
+
+         else:
+            dlg = wx.MessageDialog(self, message='All documents tested.Please select a new category', caption='Information', style=wx.OK|wx.ICON_INFORMATION)
+            dlg.ShowModal()
+            dlg.Destroy()
+
+
+   def OnPredictAll(self, event=None):
    #Get the next advertisement.
-      if (self.payMaster.getNextDocument()):
-         document = self.payMaster.getNextDocument()
-         self.actSalaryTextBox.setValue(document.getSalaryNorm())
-         self.adTextBox.setValue("Title:" + ' '.join(document.getTitle()) + '\nDescription:' + ' '.join(document.getDescription()) + '\nCompany:' + document.getCompany() + '\nLocation:' + document.getRawLocation())
-      else:
-         dlg = wx.MessageDialog(self, message='All documents tested.Please select a new category', caption='Information', style=wx.OK|wx.ICON_INFORMATION)
-         dlg.ShowModal()
-         dlg.Destroy()
-  	
+      self.payMaster.resetStats()
+      self.payMaster.predictAll()
+      self.adTextBox.SetValue("")
+      self.actSalaryTextBox.SetValue("")
+      self.predictSalaryTextBox.SetValue("")
+      self.errorTextBox.SetValue("")
+      self.runningMeanTextBox.SetValue(str(self.payMaster.getMean()))
+    	
 	
    def refresh(self):
    #Refreshes the whole data
-      self.adTextBox            = ""
-      self.actSalaryTextBox     = ""
-      self.predictSalaryTextBox = ""
-      self.runningMeanTextBox   = ""
-      self.errorTextBox         = ""
+      self.adTextBox.SetValue("")
+      self.actSalaryTextBox.SetValue("")
+      self.predictSalaryTextBox.SetValue("")
+      self.runningMeanTextBox.SetValue("")
+      self.errorTextBox.SetValue("")
+
 
 
 class DemoFrame(wx.Frame):
@@ -180,7 +203,9 @@ class DemoFrame(wx.Frame):
 if __name__ == '__main__':
     app = wx.App()
     if len(sys.argv) > 1:
-    	inputfile = open(sys.argv[1], 'rt')
-    frame = DemoFrame(inputfile,None, title="The Pay Master")
-    frame.Show()
-    app.MainLoop()
+    	inputfile = sys.argv[1]
+    	frame = DemoFrame(inputfile,None, title="The Pay Master")
+    	frame.Show()
+    	app.MainLoop()
+    else:
+        print "Please pass the correct filename as the argument"

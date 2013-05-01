@@ -81,7 +81,7 @@ class RandomForestRegressor(Regressor):
       strings = []
       strings.append(" ".join(document.getBagOfWords2("all")))
       Z = self.vectorizer.fit_transform(strings).toarray()
-      return self.regressor.predict(Z)
+      return self.regressor.predict(Z)[0]
       
 class KNeighborsRegressor(Regressor):
    def findImportantFeatures(self, numFeatures = 500):
@@ -119,7 +119,7 @@ class KNeighborsRegressor(Regressor):
       strings = []
       strings.append(" ".join(document.getBagOfWords2("all")))
       Z = self.vectorizer.transform(strings).todense()
-      return self.regressor.predict(Z)
+      return self.regressor.predict(Z)[0]
 
 class SVMRegressor(Regressor):
    def findImportantFeatures(self, numFeatures = 1000):
@@ -147,4 +147,4 @@ class SVMRegressor(Regressor):
       strings = []
       strings.append(" ".join(document.getBagOfWords2("all")))
       Z = self.vectorizer.fit_transform(strings)
-      return self.regressor.predict(Z)
+      return self.regressor.predict(Z)[0]
