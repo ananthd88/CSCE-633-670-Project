@@ -95,8 +95,10 @@ class NaiveBayesClassifier(Classifier):
       return
       self.features = []
       count = 0
+      print "Classifier features - ",
       for key in sorted(trainSet.getVocabulary(), key = lambda word: trainSet.getUniqueWeight(word), reverse=True):
          self.features.append(key)
+         print key, " ",
          count += 1
          if countmi == numFeatures:
             break
