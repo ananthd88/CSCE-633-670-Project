@@ -33,8 +33,17 @@ Eg.
 
 GUI Interface - Demo.py
 ./Demo.py <Training & test combo .csv file>
-
+You can edit the advertisement and see the effect of your changes when you predict the salary.
 
 Packages required for installation:
 wxPython - GUI for Python (http://www.wxpython.org/)
 scikit-learn - Machine Learning in Python (http://scikit-learn.org/)
+
+
+Training and Test File:
+The Training and Test sets are read from a single .csv file.
+You can download The original file (ADzuna's dataset from the Kaggle Competetion) from: https://www.dropbox.com/s/0088a9xr7qkubmx/Train_rev1.csv
+You can download the preprocessed version of the file from: https://www.dropbox.com/s/0eiz2dg36rax1q3/Train_Test_Processed.csv
+The program splits the file as 75% Training set and 25% Test set.
+
+It is advised that you use the preprocessed file since the data has been cleaned, spelling errors have been corrected to a good extend, non-alphebetic symbols have been removed and unused fields (Cotract Type, Source Name, etc) have been removed. Also the preprocessed file is considerably smaller at ~335MB.
