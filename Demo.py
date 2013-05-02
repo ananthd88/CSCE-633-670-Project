@@ -86,7 +86,6 @@ class DemoPanel(wx.Panel):
          self.document = self.payMaster.getNextDocument()
          strings = self.adTextBox.GetValue() 
          document = self.testCollection.addDocument(self.createDocumentDictionary(strings))
-         print document
          predictedSalary = self.payMaster.predict(document)
          self.predictSalaryTextBox.SetValue(str(predictedSalary))
          self.errorTextBox.SetValue(str(predictedSalary - self.document.getSalary()))
@@ -116,13 +115,12 @@ class DemoPanel(wx.Panel):
       dictionary = {}
       list_of_strings = re.split("\n",strings)
       
-      dictionary["Title"]            = re.split('Title:',list_of_strings[0])[1]
-      dictionary["FullDescription"]  = re.split('Description:',list_of_strings[1])[1]
-      dictionary["LocationRaw"]      = re.split('Location:',list_of_strings[3])[1]
+      dictionary["Title"]            = re.split('Title:',list_of_strings[0] + " ")[1]
+      dictionary["FullDescription"]  = re.split('Description:',list_of_strings[1] + " ")[1]
+      dictionary["LocationRaw"]      = re.split('Location:',list_of_strings[3] + " ")[1]
       dictionary["Category"]         = self.categoryComboBox.GetValue().lower()
-      dictionary["Company"]          = re.split('Company:',list_of_strings[2])[1]
+      dictionary["Company"]          = re.split('Company:',list_of_strings[2] + " ")[1]
       dictionary["SalaryNormalized"] = self.actSalaryTextBox.GetValue()
-      print dictionary
       return dictionary
 
    

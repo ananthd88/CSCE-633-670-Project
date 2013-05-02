@@ -126,24 +126,11 @@ class SVMRegressor(Regressor):
       #Selecting the important features
       self.features = []
       count = 0
-      #print "SVR Regressor features - ",
-      if self.isGroup:
-         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getMI(word, self.trainSet), reverse=True):
-            self.features.append(key)
-            #print "(" + key + ", " + "%7.3f" % (self.trainSet.getMI(key))+ ") ",
-            count += 1
-            if count == numFeatures:
-               self.minMI = self.trainSet.getMI(key, self.trainSet)
-               break
-      else:
-         #print "isNotGroup ",
-         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: math.fabs(self.trainSet.getUniqueWeightOf(word)), reverse=True):
-            self.features.append(key)
-            #print "(" + key + ", " + "%7.3f" % (self.trainSet.getUniqueWeightOf(key))+ ") ",
-            count += 1
-            if count == numFeatures:
-               self.minMI = self.trainSet.getUniqueWeightOf(key)
-               break
+      for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getUniqueWeightOf(word), reverse=True):
+         count += 1
+         self.features.append(key)
+         if count == numFeatures:
+            break
    def train(self, numFeatures = 1000):
       self.findImportantFeatures(numFeatures)
       self.vectorizer = CountVectorizer(vocabulary = self.features,min_df = 1)
@@ -156,6 +143,13 @@ class SVMRegressor(Regressor):
          Y.append(document.getSalary())
       X = self.vectorizer.fit_transform(strings)
       self.regressor.fit(X,Y)
+      Coef = self.regressor.coef_
+      coef_list = Coef.toarray()
+      #for i in range(len(coef_list[0])):
+      #   if math.fabs(coef_list[0][i]-0.0) > 0.1:
+      #      print self.features[i],coef_list[0][i]
+
+
    def predict(self, document):
       strings = []
       strings.append(" ".join(document.getBagOfWords2("all")))

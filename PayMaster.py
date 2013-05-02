@@ -140,7 +140,6 @@ class PayMaster:
       actualSalary = document.getSalary()
       self.predictedCount += 1
       self.runningMean += (math.fabs(predictedSalary - actualSalary) - self.runningMean) / self.predictedCount
-      #print "Actual Salary = %9.2f, Predicted Salary = %9.2f, Error = %9.2f, Running Mean Error = %f" % (actualSalary, predictedSalary, predictedSalary - actualSalary, self.runningMean)
       if predictedSalary > actualSalary:
          self.posCount += 1
          self.posMean += (math.fabs(predictedSalary - actualSalary) - self.posMean) / self.posCount
