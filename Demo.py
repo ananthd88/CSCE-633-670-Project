@@ -81,12 +81,12 @@ class DemoPanel(wx.Panel):
    #Predict the salary for the current ad.
       if (self.adTextBox.GetValue() != ""):
            
-         self.document = self.payMaster.getNextDocument()
+         #self.document = self.payMaster.getNextDocument()
          strings = self.adTextBox.GetValue() 
          document = self.testCollection.addDocument(self.createDocumentDictionary(strings))
          predictedSalary = self.payMaster.predict(document)
          self.predictSalaryTextBox.SetValue(str(predictedSalary))
-         self.errorTextBox.SetValue(str(predictedSalary - self.document.getSalary()))
+         self.errorTextBox.SetValue(str(predictedSalary - document.getSalary()))
          self.runningMeanTextBox.SetValue(str(self.payMaster.getMean()))
             
 
