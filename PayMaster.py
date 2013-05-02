@@ -96,6 +96,13 @@ class PayMaster:
          self.regressor = Regressor.UniqueWeightsRegressor(self.categoryTrain, False)
          self.regressor.train(numFeaturesR)
       self.trained = True
+      print "Printing the regressor features used"
+      count = 0
+      for key in sorted(self.categoryTrain.getVocabulary(), key = lambda word: math.fabs(self.categoryTrain.getUniqueWeightOf(word)), reverse=True):
+         print "%15s" % (key) + " - " + "%7.3f" % (self.categoryTrain.getUniqueWeightOf(key))
+         count += 1
+         if count == numFeaturesR:
+            break
       return True
    def trainCR(self, classification, regression, numFeaturesC, numFeaturesR):
       self.classifier = {

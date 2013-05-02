@@ -156,7 +156,6 @@ class SVMRegressor(Regressor):
          Y.append(document.getSalary())
       X = self.vectorizer.fit_transform(strings)
       self.regressor.fit(X,Y)
-      self.regressor.score(X, Y)
    def predict(self, document):
       strings = []
       strings.append(" ".join(document.getBagOfWords2("all")))
