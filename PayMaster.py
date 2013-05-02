@@ -14,7 +14,6 @@ class PayMaster:
       self.refresh(categoryName)
       
    def refresh(self, categoryName):
-      print categoryName
       self.trainSet = Collection.Collection("Training")
       self.testSet = Collection.Collection("Testing")
       self.categoryName = categoryName.lower()
@@ -131,11 +130,9 @@ class PayMaster:
          classification = self.classifier.classify(document)
          self.regressor = self.regressors[classification]
       predictedSalary = self.regressor.predict(document)
-      print "Hello", str(predictedSalary), " ",
       actualSalary = document.getSalary()
       self.predictedCount += 1
       self.runningMean += (math.fabs(predictedSalary - actualSalary) - self.runningMean) / self.predictedCount
-      print str(self.runningMean)
       if predictedSalary > actualSalary:
          self.posCount += 1
          self.posMean += (math.fabs(predictedSalary - actualSalary) - self.posMean) / self.posCount
