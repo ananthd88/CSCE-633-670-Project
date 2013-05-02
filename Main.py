@@ -19,7 +19,7 @@ def main():
    timer = Timer.Timer("Entire Program", 0, 0)
    parser = argparse.ArgumentParser(prog = "PayMaster", description='Parser for PayMaster')
    parser.add_argument('--version', action='version', version='The PayMaster 1.0')
-   parser.add_argument('--file', metavar = '<csv file>', type = str, nargs = 1,
+   parser.add_argument('--file', metavar = '<csv file>', type = str, nargs = 1, required = True,
                       help = 'File to read in the training and test sets')
    parser.add_argument('-c', metavar='<classifier>', type = str, nargs = 1, choices = ["NBC", "SVC"],
                       help = 'Classifier to be used, could be one of "NBC" or "SVM"')
@@ -30,18 +30,24 @@ def main():
    parser.add_argument('--category', metavar = '<category>', type = str, nargs = 1,
                       help = 'Category of jobs')
    args = parser.parse_args(sys.argv[1:])
-   isRegressionOnly = True
-   classification = "NBC"
    if args.c:
       isRegressionOnly = False
       classification = args.c[0]
+   else:
+      isRegressionOnly = True
+      classification = "NBC"
    if args.r:
       regression = args.r[0]
+   else:
+      regression = "KNR"
    if args.features:
       numFeaturesC = args.features[0]
       numFeaturesR = args.features[0]
+   else:
+      numFeaturesC = 1000
+      numFeaturesR = 1000
    if args.category:
-      process(args.file[0], args.category[0], isRegressionOnly, classification, regression, numFeaturesC, numFeaturesR)
+      process(args.file[0], args.category[0].lower(), isRegressionOnly, classification, regression, numFeaturesC, numFeaturesR)
       return
       
    inputfile = open(args.file[0], 'rt')
