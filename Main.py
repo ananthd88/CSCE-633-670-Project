@@ -21,10 +21,10 @@ def main():
    parser.add_argument('--version', action='version', version='The PayMaster 1.0')
    parser.add_argument('--file', metavar = '<csv file>', type = str, nargs = 1,
                       help = 'File to read in the training and test sets')
-   parser.add_argument('-c', metavar='<classifier>', type = str, nargs = 1,
-                      help='Classifier to be used, could be one of "NBC" or "SVM"')
-   parser.add_argument('-r', metavar='<regressor>', type = str, nargs = 1,
-                      help='Regressor to be used, could be one of "KNR", "RFR" or "SVR"')
+   parser.add_argument('-c', metavar='<classifier>', type = str, nargs = 1, choices = ["NBC", "SVC"],
+                      help = 'Classifier to be used, could be one of "NBC" or "SVM"')
+   parser.add_argument('-r', metavar='<regressor>', type = str, nargs = 1, choices = ["KNR", "RFR", "SVR"],
+                      help = 'Regressor to be used, could be one of "KNR", "RFR" or "SVR"')
    parser.add_argument('--features', metavar='<number of features to be used>', type=int, nargs = 1,
                       help='Number of features to be used')
    parser.add_argument('--category', metavar = '<category>', type = str, nargs = 1,
