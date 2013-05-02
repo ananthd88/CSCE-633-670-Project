@@ -19,20 +19,19 @@ def main():
    timer = Timer.Timer("Entire Program", 0, 0)
    parser = argparse.ArgumentParser(prog = "PayMaster", description='Parser for PayMaster')
    parser.add_argument('--version', action='version', version='The PayMaster 1.0')
-   parser.add_argument('--file', metavar = '<csv file>', type = argparse.FileType('r'), nargs = 1,
+   parser.add_argument('--file', metavar = '<csv file>', type = str, nargs = 1,
                       help = 'File to read in the training and test sets')
-   parser.add_argument(
    parser.add_argument('-c', metavar='<classifier>', type = str, nargs = 1,
                       help='Classifier to be used, could be one of "NBC" or "SVM"')
-
    parser.add_argument('-r', metavar='<regressor>', type = str, nargs = 1,
-                      help='Classifier to be used, could be one of "KNR", "RFR" or "SVR"')
-
+                      help='Regressor to be used, could be one of "KNR", "RFR" or "SVR"')
    parser.add_argument('--features', metavar='<number of features to be used>', type=int, nargs = 1,
                       help='Number of features to be used')
    parser.add_argument('--category', metavar = '<category>', type = str, nargs = 1,
                       help = 'Category of jobs')
    args = parser.parse_args(sys.argv[1:])
+   isRegressionOnly = True
+   classification = "NBC"
    if args.c:
       isRegressionOnly = False
       classification = args.c[0]
@@ -42,22 +41,12 @@ def main():
       numFeaturesC = args.features[0]
       numFeaturesR = args.features[0]
    if args.category:
+      process(args.file[0], args.category[0], isRegressionOnly, classification, regression, numFeaturesC, numFeaturesR)
+      return
       
-   #isRegressionOnly = False
-   #classification = "NBC"
-   #regression = "RFR"
-   #numFeaturesC = 1000
-   #numFeaturesR = 1000
+   inputfile = open(args.file[0], 'rt')
    
-   if classification not in ["NBC", "SVC"] or regression not in ["KNR", "RFR", "SVR", "UWR"]:
-      print "Invalid classifier or regressor"
-      return
-   if len(sys.argv) >= 3:
-      print "Processing %s" % (sys.argv[2])
-      process(sys.argv[2].lower(), isRegressionOnly, classification, regression, numFeaturesC, numFeaturesR)
-      timer.stop()
-      return
-   inputfile = open(sys.argv[1], 'rt')
+   
    cats = {}
    try:
       reader = csv.DictReader(inputfile)
@@ -74,7 +63,7 @@ def main():
    finally:
       inputfile.close()
    for cat in cats:
-      cats[cat][3] = process(cat, isRegressionOnly, classification, regression, numFeaturesC, numFeaturesR)      
+      cats[cat][3] = process(args.file[0], cat, isRegressionOnly, classification, regression, numFeaturesC, numFeaturesR)
    
    total = [0, 0, 0, 0.0, 0.0]
    for cat in cats:
@@ -88,9 +77,9 @@ def main():
    timer.stop()
    
    
-def process(categoryToProcess, regressionOnly = False, classification = "NBC",regression = "RFR", numFeaturesC = 1000, numFeaturesR = 1000):
+def process(filename, categoryToProcess, regressionOnly = False, classification = "NBC",regression = "RFR", numFeaturesC = 1000, numFeaturesR = 1000):
    timer0 = Timer.Timer("Processing " + categoryToProcess, 0, 0)
-   inputfile = open(sys.argv[1], 'rt')
+   inputfile = open(filename, 'rt')
    trainSet = Collection.Collection("Training")
    testSet = Collection.Collection("Testing")
    timer = Timer.Timer("Processing csv file", 0, 0)

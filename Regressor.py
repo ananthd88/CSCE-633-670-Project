@@ -59,7 +59,7 @@ class RandomForestRegressor(Regressor):
                self.minMI = self.trainSet.getMI(key, self.trainSet)
                break
       else:
-         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getUniqueWeightOf(word), reverse=True):
+         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: math.fabs(self.trainSet.getUniqueWeightOf(word)), reverse=True):
             self.features.append(key)
             count += 1
             if count == numFeatures:
@@ -95,7 +95,7 @@ class KNeighborsRegressor(Regressor):
                self.minMI = self.trainSet.getMI(key, self.trainSet)
                break
       else:
-         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getUniqueWeightOf(word), reverse=True):
+         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: math.fabs(self.trainSet.getUniqueWeightOf(word)), reverse=True):
             self.features.append(key)
             count += 1
             if count == numFeatures:
@@ -126,13 +126,24 @@ class SVMRegressor(Regressor):
       #Selecting the important features
       self.features = []
       count = 0
-      print "SVR Regrerssor features - ",
-      for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getUniqueWeightOf(word), reverse=True):
-         count += 1
-         self.features.append(key)
-         print key, " ",
-         if count == numFeatures:
-            break
+      #print "SVR Regressor features - ",
+      if self.isGroup:
+         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getMI(word, self.trainSet), reverse=True):
+            self.features.append(key)
+            #print "(" + key + ", " + "%7.3f" % (self.trainSet.getMI(key))+ ") ",
+            count += 1
+            if count == numFeatures:
+               self.minMI = self.trainSet.getMI(key, self.trainSet)
+               break
+      else:
+         #print "isNotGroup ",
+         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: math.fabs(self.trainSet.getUniqueWeightOf(word)), reverse=True):
+            self.features.append(key)
+            #print "(" + key + ", " + "%7.3f" % (self.trainSet.getUniqueWeightOf(key))+ ") ",
+            count += 1
+            if count == numFeatures:
+               self.minMI = self.trainSet.getUniqueWeightOf(key)
+               break
    def train(self, numFeatures = 1000):
       self.findImportantFeatures(numFeatures)
       self.vectorizer = CountVectorizer(vocabulary = self.features,min_df = 1)
