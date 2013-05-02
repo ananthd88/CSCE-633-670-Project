@@ -26,8 +26,6 @@ class DemoPanel(wx.Panel):
 
    #Event Handling
    def OnTrain(self, event=None):
-   #Bring up a wx.MessageDialog with a useless message.
-      
 
       s = self.featureTextBox.GetValue()
       classifier = self.classifierComboBox.GetValue()
@@ -168,10 +166,42 @@ class DemoPanel(wx.Panel):
    def setComboBoxs(self):
    #Initialise all the ComboBoxs     
       category_list = ["Part Time Jobs","Engineering Jobs","Legal Jobs","Healthcare & Nursing Jobs","Graduate Jobs","Social Work Jobs"]
+      category_list = ["Trade & Construction Jobs",
+                       "Legal Jobs",
+                       "Pr, Advertising & Marketing Jobs",
+                       "consultancy jobs",
+                       "graduate jobs",
+                       "energy, oil & gas jobs",
+                       "creative & design jobs",
+                       "healthcare & nursing jobs",
+                       "it jobs",
+                       "admin jobs",
+                       "logistics & warehouse jobs",
+                       "sales jobs",
+                       "retail jobs",
+                       "customer services jobs",
+                       "travel jobs",
+                       "social work jobs",
+                       "property jobs",
+                       "other/general jobs",
+                       "domestic help & cleaning jobs",
+                       "HR & Recruitment Jobs",
+                       "Hospitality & Catering Jobs",
+                       "Engineering Jobs",
+                       "Part Time Jobs",
+                       "Scientific & Qa jobs",
+                       "Manufacturing Jobs",
+                       "Maintenance Jobs",
+                       "Accounting & Finance Jobs",
+                       "Charity & Voluntary Jobs",
+                       "Teaching Jobs"
+                        ]
+      category_list = [x.title() for x in category_list]
+      category_list.sort() 
       classifiers = ["","Naive Bayes","SVM"]
       regressors = ["","K Nearest Neighbours","SVM","RandomForest"]
       self.categoryComboBox   = wx.ComboBox(self,style = wx.CB_READONLY, choices = category_list)
-      self.categoryComboBox.SetValue("Part Time Jobs")
+      self.categoryComboBox.SetValue("Graduate Jobs")
       self.classifierComboBox = wx.ComboBox(self,style = wx.CB_READONLY, choices = classifiers)
       self.classifierComboBox.SetValue("Naive Bayes")
       self.regressorComboBox  = wx.ComboBox(self,style = wx.CB_READONLY, choices = regressors)
