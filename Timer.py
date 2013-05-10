@@ -15,7 +15,7 @@ class Timer:
       self.limit = limit
       self.progress = 0
       if self.numBars:
-         print self.string
+         #print self.string
          self.oneBar = int(math.ceil(limit/numBars))
          sys.stdout.write("[%s]" % (" " * numBars))
          sys.stdout.flush()

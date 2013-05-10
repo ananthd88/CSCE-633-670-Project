@@ -9,7 +9,7 @@ import math
 class Regressor:
    def __init__(self, trainSet, isGroup = True):
       self.trainSet     = trainSet
-      self.features     = {}
+      self.features     = []
       self.minMI        = 0.0
       self.vectorizer   = None
       self.regressor    = None
@@ -19,7 +19,24 @@ class Regressor:
       return
    def predict(self, testSet = False):
       return
-
+   def findImportantFeatures(self, numFeatures = 500):
+      self.features = []
+      count = 0
+      if self.isGroup:
+         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getMI(word, self.trainSet), reverse=True):
+            self.features.append(key)
+            count += 1
+            if count == numFeatures:
+               self.minMI = self.trainSet.getMI(key, self.trainSet)
+               break
+      else:
+         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: math.fabs(self.trainSet.getUniqueWeightOf(word)), reverse=True):
+            self.features.append(key)
+            count += 1
+            if count == numFeatures:
+               self.minMI = self.trainSet.getUniqueWeightOf(key)
+               break
+   
 class UniqueWeightsRegressor(Regressor):
    def train(self, numFeatures = 500):
       count = 0
@@ -48,23 +65,6 @@ class UniqueWeightsRegressor(Regressor):
       return predictedSalary
       
 class RandomForestRegressor(Regressor):
-   def findImportantFeatures(self, numFeatures = 500):
-      self.features = []
-      count = 0
-      if self.isGroup:
-         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getMI(word, self.trainSet), reverse=True):
-            self.features.append(key)
-            count += 1
-            if count == numFeatures:
-               self.minMI = self.trainSet.getMI(key, self.trainSet)
-               break
-      else:
-         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: math.fabs(self.trainSet.getUniqueWeightOf(word)), reverse=True):
-            self.features.append(key)
-            count += 1
-            if count == numFeatures:
-               self.minMI = self.trainSet.getUniqueWeightOf(key)
-               break
    def train(self, numFeatures = 500):
       self.findImportantFeatures(numFeatures)
       self.regressor = RFR()
@@ -84,23 +84,6 @@ class RandomForestRegressor(Regressor):
       return self.regressor.predict(Z)[0]
       
 class KNeighborsRegressor(Regressor):
-   def findImportantFeatures(self, numFeatures = 500):
-      self.features = []
-      count = 0
-      if self.isGroup:
-         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getMI(word, self.trainSet), reverse=True):
-            self.features.append(key)
-            count += 1
-            if count == numFeatures:
-               self.minMI = self.trainSet.getMI(key, self.trainSet)
-               break
-      else:
-         for key in sorted(self.trainSet.getVocabulary(), key = lambda word: math.fabs(self.trainSet.getUniqueWeightOf(word)), reverse=True):
-            self.features.append(key)
-            count += 1
-            if count == numFeatures:
-               self.minMI = self.trainSet.getUniqueWeightOf(key)
-               break
    def train(self, numFeatures = 500):
       self.regressor = KNR(n_neighbors=5,weights='uniform')
       #self.findImportantFeatures(numFeatures)
@@ -122,15 +105,6 @@ class KNeighborsRegressor(Regressor):
       return self.regressor.predict(Z)[0]
 
 class SVMRegressor(Regressor):
-   def findImportantFeatures(self, numFeatures = 1000):
-      #Selecting the important features
-      self.features = []
-      count = 0
-      for key in sorted(self.trainSet.getVocabulary(), key = lambda word: self.trainSet.getUniqueWeightOf(word), reverse=True):
-         count += 1
-         self.features.append(key)
-         if count == numFeatures:
-            break
    def train(self, numFeatures = 1000):
       self.findImportantFeatures(numFeatures)
       self.vectorizer = CountVectorizer(vocabulary = self.features,min_df = 1)

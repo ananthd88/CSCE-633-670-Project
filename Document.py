@@ -61,7 +61,7 @@ class Document:         # Class which abstracts documents
          "company": re.split('\s+', self.company.getName()),
          "all": self.title + self.description + self.location + re.split('\s+', self.company.getName()),
       }[field]
-   # Returns a list of words from selected field marked by 't_' & 'd_'
+   # Returns a list of words from selected fields
    def getBagOfWords2(self, field = "description"):
       if self.indexWithMarkers:
          bag = []
@@ -82,7 +82,7 @@ class Document:         # Class which abstracts documents
                bag.append("d_" + word)      
          return bag
       else:
-         return self.getBagOfWords("all")
+         return self.getBagOfWords(field)
    def getWordDictionary(self, string):
       words = re.split('[ ]+', string)
       dictionary = {}

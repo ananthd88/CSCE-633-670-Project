@@ -314,43 +314,56 @@ class Index:                     # Index for a collection
             return [False,False]
       return False
 
+   def computeWeights(self, pctChange, words, wordcloud):
+      delta = pctChange/len(words)
+      for word in words:
+         if not wordcloud.get(word, False):
+            #                  +ve count  -ve count  +ve mean delta -ve mean delta
+            wordcloud[word] = [1        , 1        , 0.0           , 0.0]
+         if delta > 0.0:
+            wordcloud[word][0] += 1
+            wordcloud[word][2] = wordcloud[word][2] + (delta - wordcloud[word][2])/float(wordcloud[word][0])
+         elif delta < 0.0:
+            wordcloud[word][1] += 1
+            wordcloud[word][3] = wordcloud[word][3] + (delta - wordcloud[word][3])/float(wordcloud[word][1])
+            
    def computeAllWeights(self):
-      # Compute Weights and Unique Weights
       wordcloud = {}
       wordcloudUnique = {}
+      # Compute Weights and Unique Weights
       for docKey in self.category.getDocuments():
          document = self.category.getDocument(docKey)
          pctChange = (document.getSalary()/self.category.getMean() - 1.0) * 100
          # Title
          words = document.getBagOfWords2("title")
-         for word in words:
-            if not wordcloud.get(word, False):
-               wordcloud[word] = [0.0, 0.0]
-            wordcloud[word][0] += 1.0
-            wordcloud[word][1] = wordcloud[word][1] + (pctChange/len(words) - wordcloud[word][1])/wordcloud[word][0]
-         wordsSet = set(words)
-         for word in wordsSet:
-            if not wordcloudUnique.get(word, False):
-               wordcloudUnique[word] = [0.0, 0.0]
-            wordcloudUnique[word][0] += 1.0
-            wordcloudUnique[word][1] = wordcloudUnique[word][1] + (pctChange/len(wordsSet) - wordcloudUnique[word][1])/wordcloudUnique[word][0]
+         self.computeWeights(pctChange, words, wordcloud)
+         words = set(words)
+         self.computeWeights(pctChange, words, wordcloudUnique)
          
          # Description
          words = document.getBagOfWords2("description")
-         for word in words:
-            if not wordcloud.get(word, False):
-               wordcloud[word] = [0.0, 0.0]
-            wordcloud[word][0] += 1.0
-            wordcloud[word][1] = wordcloud[word][1] + (pctChange/len(words) - wordcloud[word][1])/wordcloud[word][0]
-         wordsSet = set(words)
-         for word in wordsSet:
-            if not wordcloudUnique.get(word, False):
-               wordcloudUnique[word] = [0.0, 0.0]
-            wordcloudUnique[word][0] += 1.0
-            wordcloudUnique[word][1] = wordcloudUnique[word][1] + (pctChange/len(wordsSet) - wordcloudUnique[word][1])/wordcloudUnique[word][0]
+         self.computeWeights(pctChange, words, wordcloud)
+         words = set(words)
+         self.computeWeights(pctChange, words, wordcloudUnique)
+         
+         # Location
+         words = document.getBagOfWords2("location")
+         self.computeWeights(pctChange, words, wordcloud)
+         words = set(words)
+         self.computeWeights(pctChange, words, wordcloudUnique)
+         
+         # Company
+         words = document.getBagOfWords2("company")
+         self.computeWeights(pctChange, words, wordcloud)
+         words = set(words)
+         self.computeWeights(pctChange, words, wordcloudUnique)
+         
       for word in self.vocabulary.keys():
-         self.vocabulary[word].setWeight(wordcloud[word][1])
-         self.vocabulary[word].setUniqueWeight(wordcloudUnique[word][1])
+         weight = math.log(wordcloud[word][0], 10) * wordcloud[word][2] + math.log(wordcloud[word][1], 10) * wordcloud[word][3]
+         #uniqueWeight = math.log(wordcloudUnique[word][0], 10) * wordcloudUnique[word][2] + math.log(wordcloudUnique[word][1], 10) * wordcloudUnique[word][3]
+         uniqueWeight = math.log(wordcloud[word][0], 10) * wordcloud[word][2] + math.log(wordcloud[word][1], 10) * wordcloud[word][3]
+         self.vocabulary[word].setWeight(weight)
+         self.vocabulary[word].setUniqueWeight(uniqueWeight)
       self.computedWeights = True
          
    def computeAllTFIDF(self):
